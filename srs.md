@@ -247,11 +247,7 @@
 
 #B6: Business Process (dùng mermaid)
 # Business Process – CAB System
-
-## 1. Quy trình đặt chuyến xe – BR-01
-# Business Process – CAB System
-
-## 1. Quy trình đặt chuyến xe – BR-01
+1. Quy trình đặt chuyến xe – BR01
 
 ```mermaid
 flowchart TD
@@ -265,4 +261,30 @@ flowchart TD
     H --> I[Thông báo yêu cầu đã được tiếp nhận]
     I --> J([Chuyển sang tìm tài xế])
 ```
-#B9: Phân rã (Business
+2. Quy trình tìm và phân công tài xế – BR02
+```mermaid
+flowchart TD
+    A([Nhận yêu cầu đặt xe]) --> B[Xác định các tài xế phù hợp]
+    B --> C[Kiểm tra vị trí tài xế]
+    C --> D[Kiểm tra trạng thái sẵn sàng]
+    D --> E[Ưu tiên tài xế phù hợp và gần khách hàng]
+    E --> F{Có tài xế phù hợp?}
+
+    F -- Không --> G[Thông báo không tìm được tài xế]
+    G --> H([Kết thúc])
+
+    F -- Có --> I[Gửi yêu cầu chuyến đến tài xế]
+    I --> J{Tài xế phản hồi?}
+
+    J -- Không --> K[Chờ hết thời gian phản hồi]
+    K --> L[Tìm tài xế tiếp theo]
+    L --> I
+
+    J -- Có --> M{Tài xế chấp nhận?}
+    M -- Không --> L
+    M -- Có --> N[Phân công chuyến cho tài xế]
+    N --> O[Thông báo cho khách hàng]
+    O --> P([Bắt đầu chuyến])
+```
+
+#B7: Phân rã (Business
