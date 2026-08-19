@@ -63,7 +63,7 @@
 - ⚪ **Monitor:** Theo dõi và cập nhật khi cần.
 
 ### Sơ đồ Stakeholder Matrix
-
+```text
                     MỨC ĐỘ ẢNH HƯỞNG (POWER)
                               CAO
                                │
@@ -82,6 +82,7 @@
                               THẤP
                          MỨC ĐỘ QUAN TÂM
                            THẤP  →  CAO
+```
 
 #B3: BUSINESS GOALS
 1. BJ01 – Tăng tính linh hoạt và thuận tiện trong thanh toán:
@@ -263,4 +264,5 @@ flowchart TD
     G --> H[Hệ thống tiếp nhận yêu cầu]
     H --> I[Thông báo yêu cầu đã được tiếp nhận]
     I --> J([Chuyển sang tìm tài xế])
+```
 #B9: Phân rã (Business
