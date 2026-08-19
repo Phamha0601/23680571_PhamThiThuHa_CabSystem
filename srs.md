@@ -248,6 +248,11 @@
 # Business Process – CAB System
 
 ## 1. Quy trình đặt chuyến xe – BR-01
+# Business Process – CAB System
+
+## 1. Quy trình đặt chuyến xe – BR-01
+
+```mermaid
 flowchart TD
     A([Bắt đầu]) --> B[Khách hàng đăng nhập]
     B --> C[Nhập vị trí hiện tại]
