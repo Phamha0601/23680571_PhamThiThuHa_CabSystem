@@ -84,7 +84,7 @@
                            THẤP  →  CAO
 ```
 
-#B3: BUSINESS GOALS
+# B3: BUSINESS GOALS
 1. BJ01 – Tăng tính linh hoạt và thuận tiện trong thanh toán:
 * Hỗ trợ thanh toán bằng tiền mặt.
 * Hỗ trợ thanh toán online/chuyển khoản.
@@ -154,7 +154,7 @@
 * Lưu lại các thao tác quan trọng để phục vụ kiểm tra.
 
 
-#B4: Xác định PHẠM VI SCOPE: 
+# B4: Xác định PHẠM VI SCOPE: 
 1. Quản lý tài khoản người dùng
 - Đăng ký và đăng nhập tài khoản khách hàng.
 - Quản lý thông tin cá nhân khách hàng.
@@ -226,7 +226,7 @@
 - Bảo vệ dữ liệu giao dịch.
 - Lưu vết các thao tác quan trọng.
 
-#B5: Xác định Business Requirement
+# B5: Xác định Business Requirement
 # B4. Business Requirements
 
 | Mã | Tên | Diễn giải |
@@ -245,7 +245,7 @@
 | BR12 | Bảo mật và phân quyền | Hệ thống đảm bảo người dùng được xác thực, phân quyền phù hợp và bảo vệ thông tin cá nhân, dữ liệu vị trí và giao dịch. |
 
 
-#B6: Business Process (dùng mermaid)
+# B6: Business Process (dùng mermaid)
 # Business Process – CAB System
 1. Quy trình đặt chuyến xe – BR01
 
@@ -287,7 +287,7 @@ flowchart TD
     O --> P([Bắt đầu chuyến])
 ```
 
-#B7: Phân rã yêu cầu về chức năng
+# B7: Phân rã yêu cầu về chức năng
 | FR       | Chức năng         | Mô tả                                                                    |
 | -------- | ----------------- | ------------------------------------------------------------------------ |
 | **FR01** | Quản lý tài khoản | Đăng ký, đăng nhập và cập nhật thông tin người dùng.                     |
@@ -305,7 +305,7 @@ flowchart TD
 | **FR13** | Phân quyền        | Kiểm soát quyền truy cập các chức năng quản trị.                         |
 | **FR14** | Quản lý lịch sử   | Tra cứu lịch sử chuyến đi và giao dịch.                                  |
 
-#B8: Business Goal and Acceptance Criteria
+# B8: Business Goal and Acceptance Criteria
 
 | ID       | Business Goal                                | Acceptance Criteria                                                                                                                                                                                                                                                                                    |
 | -------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -325,7 +325,7 @@ flowchart TD
 | **BG14** | **Hỗ trợ báo cáo hoạt động**                 | • Có thông tin số lượng chuyến.<br>• Có thông tin doanh thu.<br>• Có tỷ lệ chuyến hoàn thành.<br>• Có tỷ lệ chuyến hủy.<br>• Có thông tin hiệu quả hoạt động của tài xế.                                                                                                                               |
 
 
-#B9: Data Model
+# B9: Data Model
 1. Xác định các thực thể và thuộc tính
 
 | Thực thể | Thuộc tính |
@@ -425,5 +425,114 @@ Trong phạm vi MVP 7 tuần, các thực thể quan trọng nhất là:
 
 **Khách hàng → Đặt xe → Tìm tài xế → Thực hiện chuyến → Tính cước → Thanh toán → Đánh giá.**
 
-#B11: Tạo UseCase
-#B12: Đặc tả UseCase
+# B10: Xác định yêu cầu phi chức năng
+
+| Mã | Nhóm yêu cầu | Yêu cầu |
+|---|---|---|
+| NBR-01 | Hiệu năng | Hệ thống phải phản hồi nhanh khi khách hàng đặt xe và không bị chậm đáng kể khi số lượng người dùng tăng cao. |
+| NBR-02 | Khả năng mở rộng | Hệ thống phải có khả năng mở rộng khi số lượng khách hàng, tài xế và chuyến đi tăng. |
+| NBR-03 | Tính sẵn sàng | Hệ thống phải hoạt động ổn định và hạn chế tối đa thời gian ngừng hoạt động. |
+| NBR-04 | Độ tin cậy | Lỗi tại một thành phần như thanh toán hoặc thông báo không được làm toàn bộ hệ thống đặt xe ngừng hoạt động. |
+| NBR-05 | Bảo mật | Hệ thống phải bảo vệ thông tin cá nhân, thông tin tài xế, dữ liệu vị trí và dữ liệu giao dịch. |
+| NBR-06 | Xác thực và phân quyền | Hệ thống phải xác thực người dùng và kiểm soát quyền truy cập đối với các chức năng quản trị. |
+| NBR-07 | Lưu vết | Hệ thống phải ghi nhận các thao tác quan trọng để phục vụ kiểm tra và xử lý sự cố. |
+| NBR-08 | Khả năng bảo trì | Hệ thống phải được thiết kế theo hướng dễ bảo trì, sửa lỗi và nâng cấp. |
+| NBR-09 | Khả năng tích hợp | Hệ thống phải có khả năng tích hợp với nhà cung cấp thanh toán và các dịch vụ thông báo bên ngoài. |
+| NBR-10 | Khả năng mở rộng chức năng | Hệ thống phải cho phép bổ sung loại dịch vụ, phương thức thanh toán và kênh thông báo mới mà không phải xây dựng lại toàn bộ hệ thống. |
+| NBR-11 | Tính linh hoạt | Các thành phần kỹ thuật có thể được thay đổi hoặc nâng cấp mà hạn chế ảnh hưởng đến các chức năng khác. |
+| NBR-12 | Khả năng phục hồi | Hệ thống phải có khả năng xử lý và phục hồi khi xảy ra lỗi hoặc mất kết nối. |
+
+# B11: Tạo UseCase
+```mermaid
+flowchart LR
+
+    Customer((Customer))
+    Driver((Driver))
+    Staff((Operation Staff))
+    Admin((Administrator))
+    Payment((Payment Provider))
+    Notification((Notification Provider))
+    Map((Map/Location Provider))
+
+    subgraph CAB["CAB SYSTEM"]
+
+        UC1["Đăng ký / Đăng nhập"]
+        UC2["Quản lý thông tin cá nhân"]
+
+        UC3["Tạo yêu cầu đặt xe"]
+        UC4["Tìm tài xế"]
+        UC5["Theo dõi chuyến đi"]
+        UC6["Xem lịch sử chuyến đi"]
+        UC7["Thanh toán"]
+        UC8["Hủy chuyến"]
+        UC9["Đánh giá tài xế"]
+
+        UC10["Quản lý hồ sơ tài xế"]
+        UC11["Quản lý phương tiện"]
+        UC12["Cập nhật trạng thái hoạt động"]
+        UC13["Chấp nhận / Từ chối chuyến"]
+        UC14["Cập nhật trạng thái chuyến"]
+        UC15["Cập nhật vị trí"]
+
+        UC16["Quản lý khách hàng"]
+        UC17["Quản lý tài xế"]
+        UC18["Quản lý phương tiện"]
+        UC19["Theo dõi chuyến đi"]
+        UC20["Xử lý chuyến bị lỗi"]
+        UC21["Tra cứu giao dịch"]
+
+        UC22["Quản lý tài khoản"]
+        UC23["Phân quyền"]
+        UC24["Xem báo cáo"]
+        UC25["Xem nhật ký hoạt động"]
+
+        UC26["Xử lý thanh toán điện tử"]
+        UC27["Gửi thông báo"]
+        UC28["Cung cấp thông tin vị trí"]
+
+    end
+
+    Customer --> UC1
+    Customer --> UC2
+    Customer --> UC3
+    Customer --> UC5
+    Customer --> UC6
+    Customer --> UC7
+    Customer --> UC8
+    Customer --> UC9
+
+    Driver --> UC1
+    Driver --> UC10
+    Driver --> UC11
+    Driver --> UC12
+    Driver --> UC13
+    Driver --> UC14
+    Driver --> UC15
+
+    Staff --> UC1
+    Staff --> UC16
+    Staff --> UC17
+    Staff --> UC18
+    Staff --> UC19
+    Staff --> UC20
+    Staff --> UC21
+
+    Admin --> UC1
+    Admin --> UC22
+    Admin --> UC23
+    Admin --> UC24
+    Admin --> UC25
+
+    Payment --> UC26
+    Notification --> UC27
+    Map --> UC28
+
+    UC3 --> UC4
+    UC4 --> UC28
+    UC4 --> UC27
+    UC7 --> UC26
+    UC5 --> UC27
+    UC13 --> UC27
+```
+
+# B12: Đặc tả UseCase
