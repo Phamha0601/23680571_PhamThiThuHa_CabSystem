@@ -444,71 +444,274 @@ Trong phạm vi MVP 7 tuần, các thực thể quan trọng nhất là:
 
 # B11: Tạo UseCase
 ```mermaid
-flowchart LR
-
-    Customer((Customer))
-    Driver((Driver))
-    Staff((Operation Staff))
-    Admin((Administrator))
-
-    Payment((Payment Provider))
-    Notify((Notification Provider))
-    Map((Map / Location))
-
-    subgraph CAB["CAB SYSTEM"]
-
-        UC1["Đăng ký / Đăng nhập"]
-        UC2["Đặt xe"]
-        UC3["Theo dõi chuyến đi"]
-        UC4["Thanh toán"]
-        UC5["Xem lịch sử chuyến"]
-        UC6["Đánh giá tài xế"]
-
-        UC7["Quản lý hồ sơ & phương tiện"]
-        UC8["Nhận chuyến"]
-        UC9["Thực hiện chuyến"]
-        UC10["Cập nhật vị trí"]
-
-        UC11["Quản lý khách hàng"]
-        UC12["Quản lý tài xế"]
-        UC13["Quản lý chuyến đi"]
-        UC14["Xử lý sự cố"]
-
-        UC15["Quản lý tài khoản & phân quyền"]
-        UC16["Xem báo cáo"]
-
-    end
-
-    Customer --> UC1
-    Customer --> UC2
-    Customer --> UC3
-    Customer --> UC4
-    Customer --> UC5
-    Customer --> UC6
-
-    Driver --> UC1
-    Driver --> UC7
-    Driver --> UC8
-    Driver --> UC9
-    Driver --> UC10
-
-    Staff --> UC1
-    Staff --> UC11
-    Staff --> UC12
-    Staff --> UC13
-    Staff --> UC14
-
-    Admin --> UC1
-    Admin --> UC15
-    Admin --> UC16
-
-    UC2 --> Map
-    UC2 --> Notify
-    UC4 --> Payment
-    UC3 --> Notify
-    UC8 --> Notify
+flowchart TD
+    A([Bắt đầu]) --> B[Khách hàng đăng nhập]
+    B --> C[Nhập vị trí hiện tại]
+    C --> D[Nhập điểm đón]
+    D --> E[Nhập điểm đến]
+    E --> F[Chọn loại xe]
+    F --> G[Gửi yêu cầu đặt xe]
+    G --> H[Hệ thống tiếp nhận yêu cầu]
+    H --> I[Thông báo yêu cầu đã được tiếp nhận]
+    I --> J([Chuyển sang tìm tài xế])
 ```
+2. Quy trình tìm và phân công tài xế – BR-02
+```mermaid
+flowchart TD
+    A([Nhận yêu cầu đặt xe]) --> B[Xác định các tài xế phù hợp]
+    B --> C[Kiểm tra vị trí tài xế]
+    C --> D[Kiểm tra trạng thái sẵn sàng]
+    D --> E[Ưu tiên tài xế phù hợp và gần khách hàng]
+    E --> F{Có tài xế phù hợp?}
 
+    F -- Không --> G[Thông báo không tìm được tài xế]
+    G --> H([Kết thúc])
+
+    F -- Có --> I[Gửi yêu cầu chuyến đến tài xế]
+    I --> J{Tài xế phản hồi?}
+
+    J -- Không --> K[Chờ hết thời gian phản hồi]
+    K --> L[Tìm tài xế tiếp theo]
+    L --> I
+
+    J -- Có --> M{Tài xế chấp nhận?}
+    M -- Không --> L
+    M -- Có --> N[Phân công chuyến cho tài xế]
+    N --> O[Thông báo cho khách hàng]
+    O --> P([Bắt đầu chuyến])
+```
+# Business Process – CAB System
+
+ 1. Quy trình đặt chuyến xe – BR01
+
+```mermaid
+flowchart TD
+    A([Bắt đầu]) --> B[Khách hàng đăng nhập]
+    B --> C[Nhập vị trí hiện tại]
+    C --> D[Nhập điểm đón]
+    D --> E[Nhập điểm đến]
+    E --> F[Chọn loại xe]
+    F --> G[Gửi yêu cầu đặt xe]
+    G --> H[Hệ thống tiếp nhận yêu cầu]
+    H --> I[Thông báo yêu cầu đã được tiếp nhận]
+    I --> J([Chuyển sang tìm tài xế])
+```
+2. Quy trình tìm và phân công tài xế – BR02
+```mermaid
+flowchart TD
+    A([Nhận yêu cầu đặt xe]) --> B[Xác định các tài xế phù hợp]
+    B --> C[Kiểm tra vị trí tài xế]
+    C --> D[Kiểm tra trạng thái sẵn sàng]
+    D --> E[Ưu tiên tài xế phù hợp và gần khách hàng]
+    E --> F{Có tài xế phù hợp?}
+
+    F -- Không --> G[Thông báo không tìm được tài xế]
+    G --> H([Kết thúc])
+
+    F -- Có --> I[Gửi yêu cầu chuyến đến tài xế]
+    I --> J{Tài xế phản hồi?}
+
+    J -- Không --> K[Chờ hết thời gian phản hồi]
+    K --> L[Tìm tài xế tiếp theo]
+    L --> I
+
+    J -- Có --> M{Tài xế chấp nhận?}
+    M -- Không --> L
+    M -- Có --> N[Phân công chuyến cho tài xế]
+    N --> O[Thông báo cho khách hàng]
+    O --> P([Bắt đầu chuyến])
+```
+3. Quy trình theo dõi chuyến đi – BR03
+```mermaid
+flowchart TD
+    A([Tài xế nhận chuyến]) --> B[Hiển thị thông tin tài xế]
+    B --> C[Hiển thị vị trí tài xế]
+    C --> D[Tài xế di chuyển đến điểm đón]
+    D --> E{Tài xế đã đến?}
+
+    E -- Chưa --> C
+    E -- Rồi --> F[Cập nhật trạng thái đã đến]
+    F --> G[Thông báo cho khách hàng]
+    G --> H[Tài xế đón khách]
+    H --> I[Cập nhật trạng thái đã đón khách]
+    I --> J[Tài xế di chuyển đến điểm đến]
+    J --> K[Cập nhật trạng thái đang di chuyển]
+    K --> L[Hoàn thành chuyến]
+    L --> M[Cập nhật trạng thái hoàn thành]
+```
+4. Quy trình quản lý tài xế – BR04
+   ```mermaid
+   flowchart TD
+    A([Nhân viên vận hành]) --> B[Đăng ký hoặc tạo tài khoản tài xế]
+    B --> C[Nhập thông tin tài xế]
+    C --> D[Nhập thông tin phương tiện]
+    D --> E[Kiểm tra thông tin]
+    E --> F{Thông tin hợp lệ?}
+
+    F -- Không --> G[Yêu cầu cập nhật thông tin]
+    G --> C
+
+    F -- Có --> H[Tạo hồ sơ tài xế]
+    H --> I[Tài xế đăng nhập]
+    I --> J[Cập nhật trạng thái hoạt động]
+    J --> K{Sẵn sàng nhận chuyến?}
+
+    K -- Có --> L[Đưa tài xế vào danh sách có thể nhận chuyến]
+    K -- Không --> M[Không phân công chuyến]
+   ```
+5. Quy trình quản lý chuyến đi – BR05
+   ```mermaid
+    flowchart TD
+    A([Tạo yêu cầu]) --> B[Chờ tìm tài xế]
+    B --> C{Đã có tài xế?}
+
+    C -- Không --> D[Tiếp tục tìm tài xế]
+    D --> C
+C -- Có --> E[Đã phân công tài xế]
+    E --> F[Tài xế đang đến]
+    F --> G[Đã đến điểm đón]
+    G --> H[Đã đón khách]
+    H --> I[Đang di chuyển]
+    I --> J[Hoàn thành chuyến]
+
+    B --> K{Khách hàng hủy?}
+    K -- Có --> L[Hủy chuyến]
+    K -- Không --> C
+
+    L --> M[Lưu thông tin hủy chuyến]
+    J --> N[Lưu thông tin chuyến]
+    ```
+6. Quy trình tính cước – BR06
+   ```mermaid
+   flowchart TD
+    A([Chuyến hoàn thành]) --> B[Lấy thông tin chuyến]
+    B --> C[Xác định loại dịch vụ]
+    C --> D[Xác định thông tin quãng đường và chuyến đi]
+    D --> E[Áp dụng quy tắc tính cước]
+    E --> F[Tính tổng tiền]
+    F --> G[Lưu thông tin cước]
+    G --> H[Thông báo số tiền phải trả cho khách hàng]
+    H --> I([Chuyển sang thanh toán])
+   ```
+7. Quy trình thanh toán – BR07
+   ```mermaid
+   flowchart TD
+    A([Nhận số tiền phải trả]) --> B{Chọn phương thức thanh toán}
+
+    B -- Tiền mặt --> C[Khách hàng thanh toán tiền mặt]
+    C --> D[Xác nhận thanh toán]
+    D --> E[Lưu giao dịch]
+
+    B -- Thanh toán điện tử --> F[Gửi yêu cầu đến nhà cung cấp thanh toán]
+    F --> G{Thanh toán thành công?}
+
+    G -- Có --> H[Nhận kết quả giao dịch]
+    H --> E
+
+    G -- Không --> I[Thông báo thanh toán thất bại]
+    I --> J{Khách hàng muốn thanh toán lại?}
+
+    J -- Có --> F
+    J -- Không --> K[Lưu giao dịch thất bại]
+
+    E --> L[Thông báo kết quả thanh toán]
+    K --> L
+   ```
+8. Quy trình thông báo – BR08
+    ```mermaid
+    flowchart TD
+    A([Có sự kiện trong hệ thống]) --> B{Loại sự kiện}
+
+    B -- Đặt xe --> C[Thông báo yêu cầu đã được tiếp nhận]
+    B -- Tài xế nhận chuyến --> D[Thông báo tài xế đã nhận chuyến]
+    B -- Tài xế đến --> E[Thông báo tài xế đã đến]
+    B -- Hoàn thành chuyến --> F[Thông báo chuyến đã hoàn thành]
+    B -- Thanh toán --> G[Thông báo kết quả thanh toán]
+    B -- Chuyến mới --> H[Thông báo cho tài xế]
+
+    C --> I[Gửi thông báo]
+    D --> I
+    E --> I
+    F --> I
+    G --> I
+    H --> I
+
+    I --> J([Kết thúc])
+    ```
+9. Quy trình đánh giá tài xế – BR09
+    ```mermaid
+    flowchart TD
+    A([Chuyến hoàn thành]) --> B[Hiển thị yêu cầu đánh giá]
+    B --> C[Khách hàng đánh giá tài xế]
+    C --> D[Nhập điểm đánh giá]
+    D --> E[Nhập nhận xét nếu có]
+    E --> F[Gửi đánh giá]
+    F --> G[Lưu đánh giá]
+    G --> H[Cập nhật dữ liệu đánh giá tài xế]
+    H --> I([Kết thúc])
+    ```
+10. Quy trình quản lý vận hành – BR10\
+    ```mermaid
+    flowchart TD
+    A([Nhân viên vận hành đăng nhập]) --> B[Xác thực tài khoản]
+    B --> C{Có quyền truy cập?}
+
+    C -- Không --> D[Từ chối truy cập]
+D --> E([Kết thúc])
+
+    C -- Có --> F[Truy cập giao diện quản trị]
+    F --> G{Chọn chức năng}
+
+    G -- Quản lý khách hàng --> H[Thêm/Sửa/Xem khách hàng]
+    G -- Quản lý tài xế --> I[Thêm/Sửa/Xem tài xế]
+    G -- Quản lý phương tiện --> J[Thêm/Sửa/Xem phương tiện]
+    G -- Quản lý chuyến --> K[Xem và xử lý chuyến]
+    G -- Quản lý giao dịch --> L[Tra cứu giao dịch]
+
+    H --> M[Lưu thay đổi]
+    I --> M
+    J --> M
+    K --> M
+    L --> M
+
+    M --> N([Kết thúc])
+    ```
+11. Quy trình báo cáo hoạt động – BR11
+    ```mermaid
+    flowchart TD
+    A([Nhân viên/Quản lý yêu cầu báo cáo]) --> B[Chọn khoảng thời gian]
+    B --> C[Hệ thống lấy dữ liệu]
+    C --> D[Tổng hợp số lượng chuyến]
+    D --> E[Tổng hợp doanh thu]
+    E --> F[Tính tỷ lệ hoàn thành]
+    F --> G[Tính tỷ lệ hủy]
+    G --> H[Phân tích hiệu quả tài xế]
+    H --> I[Hiển thị báo cáo]
+    I --> J([Kết thúc])
+    ```
+12. Quy trình bảo mật và phân quyền – BR12
+     ```mermaid
+     flowchart TD
+    A([Người dùng truy cập hệ thống]) --> B[Nhập thông tin đăng nhập]
+    B --> C[Xác thực tài khoản]
+    C --> D{Thông tin hợp lệ?}
+
+    D -- Không --> E[Thông báo đăng nhập thất bại]
+    E --> F([Kết thúc])
+
+    D -- Có --> G[Xác định vai trò người dùng]
+    G --> H[Kiểm tra quyền truy cập]
+    H --> I{Có quyền thực hiện?}
+
+    I -- Không --> J[Từ chối thao tác]
+    J --> K[Ghi nhận log]
+    K --> L([Kết thúc])
+
+    I -- Có --> M[Cho phép thực hiện chức năng]
+    M --> N[Ghi nhận thao tác quan trọng]
+    N --> O[Bảo vệ dữ liệu]
+    O --> P([Kết thúc])
+     ````
 # B12: Đặc tả UseCase
 UC-01 – Đăng ký tài khoản
 Thành phần	Nội dung
@@ -708,3 +911,27 @@ Acceptance Criteria (AC) là tập hợp các điều kiện cụ thể được
 - Khách hàng phải nhận được thông báo khi chuyến hoàn thành.
 - Khách hàng phải nhận được thông báo về kết quả thanh toán.
 - Tài xế phải nhận được thông báo khi có chuyến mới hoặc thay đổi liên quan đến chuyến đang thực hiện.
+
+# B13: MA TRẬN TRUY XUẤT YÊU CẦU (RTM)
+
+| Business Goal (BG) | Business Requirement (BR) | Functional Requirement (FR) | Use Case (UC) | Acceptance Criteria (AC) |
+|---|---|---|---|---|
+| **BG01 – Tăng tính linh hoạt và thuận tiện trong thanh toán** | BR01 – Đáp ứng nhu cầu thanh toán đa dạng của khách hàng. | FR01 – Hệ thống hỗ trợ thanh toán bằng tiền mặt và thanh toán điện tử. | UC04 – Thanh toán | AC02 – Khách hàng có thể chọn phương thức thanh toán; hệ thống ghi nhận kết quả giao dịch. |
+| **BG02 – Giảm thời gian tìm tài xế** | BR02 – Giảm thời gian khách hàng chờ tìm tài xế. | FR02 – Hệ thống tự động tìm tài xế phù hợp dựa trên vị trí và trạng thái hoạt động. | UC02 – Đặt xe | AC01 – Hệ thống tự động tìm tài xế; ưu tiên tài xế phù hợp và gần khách hàng. |
+| **BG02 – Giảm thời gian tìm tài xế** | BR03 – Đảm bảo yêu cầu đặt xe tiếp tục được xử lý khi tài xế không nhận chuyến. | FR03 – Hệ thống tiếp tục tìm tài xế khác khi tài xế từ chối hoặc không phản hồi. | UC02 – Đặt xe | AC01 – Khi tài xế từ chối hoặc hết thời gian phản hồi, hệ thống chuyển sang tài xế khác. |
+| **BG03 – Nâng cao trải nghiệm đặt xe** | BR04 – Khách hàng cần biết tình trạng yêu cầu và chuyến đi. | FR04 – Hệ thống cung cấp thông tin và trạng thái chuyến đi cho khách hàng. | UC03 – Theo dõi chuyến đi | AC03 – Khách hàng xem được tài xế, trạng thái và quá trình thực hiện chuyến. |
+| **BG03 – Nâng cao trải nghiệm đặt xe** | BR05 – Khách hàng cần quản lý thông tin các chuyến đã thực hiện. | FR05 – Hệ thống lưu và cung cấp lịch sử chuyến đi. | UC05 – Xem lịch sử chuyến | AC03 – Khách hàng có thể xem lại các chuyến đã hoàn thành hoặc đã hủy. |
+| **BG04 – Nâng cao hiệu quả quản lý và vận hành** | BR06 – Nhân viên vận hành cần theo dõi hoạt động đặt xe. | FR06 – Hệ thống cho phép nhân viên theo dõi các chuyến đang diễn ra. | UC13 – Quản lý chuyến đi | AC03 – Nhân viên xem được trạng thái của các chuyến đang diễn ra. |
+| **BG04 – Nâng cao hiệu quả quản lý và vận hành** | BR07 – Doanh nghiệp cần quản lý thông tin khách hàng và tài xế tập trung. | FR07 – Hệ thống cho phép nhân viên quản lý thông tin khách hàng và tài xế. | UC11 – Quản lý khách hàng / UC12 – Quản lý tài xế | AC05 – Người có quyền có thể xem và cập nhật thông tin theo phạm vi được phân quyền. |
+| **BG05 – Nâng cao hiệu quả hoạt động của tài xế** | BR08 – Doanh nghiệp cần kiểm soát trạng thái hoạt động của tài xế. | FR08 – Hệ thống cho phép tài xế cập nhật trạng thái sẵn sàng nhận chuyến. | UC07 – Quản lý hồ sơ & phương tiện | AC05 – Tài xế có thể chuyển trạng thái hoạt động theo quy định. |
+| **BG05 – Nâng cao hiệu quả hoạt động của tài xế** | BR09 – Tài xế cần chủ động quyết định nhận chuyến. | FR09 – Hệ thống cho phép tài xế chấp nhận hoặc từ chối chuyến. | UC08 – Nhận chuyến | AC01 – Tài xế có thể chấp nhận hoặc từ chối yêu cầu trong thời gian quy định. |
+| **BG06 – Nâng cao khả năng theo dõi chuyến đi** | BR10 – Các bên liên quan cần nhận thông tin kịp thời về chuyến đi. | FR10 – Hệ thống gửi thông báo về các trạng thái quan trọng của chuyến. | UC03 – Theo dõi chuyến đi | AC06 – Khách hàng và tài xế nhận được thông báo khi có thay đổi quan trọng. |
+| **BG07 – Nâng cao độ tin cậy của dịch vụ đặt xe** | BR11 – Khách hàng phải được thông báo khi không tìm được tài xế. | FR11 – Hệ thống thông báo khi không còn tài xế phù hợp. | UC02 – Đặt xe | AC01 – Nếu không tìm được tài xế, hệ thống thông báo rõ ràng cho khách hàng. |
+| **BG07 – Nâng cao độ tin cậy của dịch vụ đặt xe** | BR12 – Lỗi thanh toán không được làm gián đoạn toàn bộ dịch vụ. | FR12 – Hệ thống xử lý và ghi nhận trạng thái thanh toán thất bại độc lập với dịch vụ đặt xe. | UC04 – Thanh toán | AC02 – Khi thanh toán thất bại, hệ thống thông báo và cho phép xử lý lại theo chính sách. |
+| **BG08 – Nâng cao chất lượng thanh toán** | BR13 – Khách hàng cần biết kết quả giao dịch. | FR13 – Hệ thống thông báo kết quả thanh toán cho khách hàng. | UC04 – Thanh toán | AC02 – Khách hàng nhận được thông báo khi thanh toán thành công hoặc thất bại. |
+| **BG09 – Nâng cao chất lượng dịch vụ** | BR14 – Doanh nghiệp cần thu thập phản hồi của khách hàng. | FR14 – Hệ thống cho phép khách hàng đánh giá tài xế sau chuyến đi. | UC06 – Đánh giá tài xế | AC06 – Chỉ cho phép đánh giá sau khi chuyến hoàn thành và lưu kết quả đánh giá. |
+| **BG10 – Nâng cao khả năng mở rộng hệ thống** | BR15 – Hệ thống cần có khả năng mở rộng khi số lượng người dùng tăng. | FR15 – Hệ thống cho phép các thành phần xử lý được mở rộng độc lập. | UC02 – Đặt xe / UC04 – Thanh toán | AC – Hệ thống vẫn đáp ứng hoạt động khi tải tăng và có thể mở rộng từng thành phần. |
+| **BG11 – Nâng cao khả năng phát triển và thay đổi hệ thống** | BR16 – Doanh nghiệp cần khả năng bổ sung dịch vụ và nhà cung cấp mới. | FR16 – Hệ thống hỗ trợ tích hợp thêm phương thức thanh toán và nhà cung cấp thông báo. | UC04 – Thanh toán / UC03 – Theo dõi chuyến đi | AC – Có thể bổ sung nhà cung cấp mới mà không phải xây dựng lại toàn bộ hệ thống. |
+| **BG12 – Nâng cao khả năng kiểm soát và bảo mật** | BR17 – Chỉ người dùng có quyền mới được truy cập chức năng tương ứng. | FR17 – Hệ thống xác thực người dùng và phân quyền truy cập. | UC01 – Đăng ký / Đăng nhập / UC15 – Quản lý tài khoản & phân quyền | AC05 – Người dùng phải đăng nhập; người không có quyền không thể thực hiện thao tác bị hạn chế. |
+| **BG12 – Nâng cao khả năng kiểm soát và bảo mật** | BR18 – Doanh nghiệp cần kiểm tra các thao tác quan trọng khi có sự cố. | FR18 – Hệ thống lưu vết các thao tác quản trị quan trọng. | UC15 – Quản lý tài khoản & phân quyền | AC05 – Các thao tác quan trọng được ghi nhận để phục vụ kiểm tra. |
+| **BG13 – Hỗ trợ ra quyết định dựa trên dữ liệu** | BR19 – Ban lãnh đạo cần thông tin tổng hợp về hoạt động kinh doanh. | FR19 – Hệ thống cung cấp báo cáo về số lượng chuyến, doanh thu, tỷ lệ hoàn thành và tỷ lệ hủy. | UC16 – Xem báo cáo | AC07 – Báo cáo hiển thị đầy đủ các chỉ số theo yêu cầu doanh nghiệp. |
