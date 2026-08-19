@@ -510,3 +510,201 @@ flowchart LR
 ```
 
 # B12: Đặc tả UseCase
+UC-01 – Đăng ký tài khoản
+Thành phần	Nội dung
+Mã UC	UC-01
+Tên	Đăng ký tài khoản
+Actor	Khách hàng
+Mục tiêu	Tạo tài khoản để sử dụng dịch vụ CAB
+Tiền điều kiện	Khách hàng chưa có tài khoản
+Luồng chính	1. Khách hàng chọn đăng ký.
+2. Nhập họ tên, email, số điện thoại và mật khẩu.
+3. Hệ thống kiểm tra thông tin.
+4. Hệ thống tạo tài khoản.
+5. Thông báo đăng ký thành công.
+Ngoại lệ	Email hoặc số điện thoại đã tồn tại → thông báo lỗi và yêu cầu nhập lại.
+Hậu điều kiện	Tài khoản khách hàng được tạo thành công.
+UC-02 – Đăng nhập
+Thành phần	Nội dung
+Mã UC	UC-02
+Tên	Đăng nhập
+Actor	Khách hàng, Tài xế, Nhân viên vận hành
+Mục tiêu	Xác thực người dùng để sử dụng hệ thống
+Tiền điều kiện	Người dùng đã có tài khoản
+Luồng chính	1. Nhập email/số điện thoại và mật khẩu.
+2. Hệ thống xác thực.
+3. Hệ thống xác định vai trò.
+4. Cho phép truy cập chức năng tương ứng.
+Ngoại lệ	Sai thông tin đăng nhập → thông báo lỗi.
+Hậu điều kiện	Người dùng đăng nhập thành công.
+UC-03 – Quản lý thông tin cá nhân
+Thành phần	Nội dung
+Mã UC	UC-03
+Tên	Quản lý thông tin cá nhân
+Actor	Khách hàng, Tài xế
+Mục tiêu	Cập nhật thông tin cá nhân
+Tiền điều kiện	Người dùng đã đăng nhập
+Luồng chính	1. Mở thông tin cá nhân.
+2. Xem thông tin hiện tại.
+3. Chỉnh sửa thông tin.
+4. Lưu thay đổi.
+5. Hệ thống cập nhật dữ liệu.
+Ngoại lệ	Thông tin không hợp lệ → yêu cầu nhập lại.
+Hậu điều kiện	Thông tin cá nhân được cập nhật.
+UC-04 – Đặt chuyến xe
+Thành phần	Nội dung
+Mã UC	UC-04
+Tên	Đặt chuyến xe
+Actor	Khách hàng
+Mục tiêu	Tạo yêu cầu đặt xe
+Tiền điều kiện	Khách hàng đã đăng nhập
+Luồng chính	1. Nhập điểm đón.
+2. Nhập điểm đến.
+3. Chọn loại xe.
+4. Xác nhận đặt xe.
+5. Hệ thống tạo yêu cầu.
+6. Hệ thống bắt đầu tìm tài xế.
+Ngoại lệ	Thiếu hoặc sai thông tin → yêu cầu khách hàng nhập lại.
+Hậu điều kiện	Yêu cầu đặt chuyến được tạo.
+UC-05 – Tìm và phân công tài xế
+Thành phần	Nội dung
+Mã UC	UC-05
+Tên	Tìm và phân công tài xế
+Actor	Hệ thống
+Mục tiêu	Tìm tài xế phù hợp cho chuyến đi
+Tiền điều kiện	Có yêu cầu đặt chuyến
+Luồng chính	1. Hệ thống lấy vị trí khách hàng.
+2. Tìm tài xế đang sẵn sàng.
+3. Ưu tiên tài xế phù hợp và gần khách hàng.
+4. Gửi yêu cầu cho tài xế.
+5. Tài xế chấp nhận.
+6. Phân công tài xế cho chuyến.
+Ngoại lệ	Tài xế từ chối/không phản hồi → tìm tài xế khác.
+Không có tài xế → thông báo cho khách hàng.
+Hậu điều kiện	Chuyến được phân công tài xế hoặc thông báo không tìm được tài xế.
+UC-06 – Chấp nhận/Từ chối chuyến
+Thành phần	Nội dung
+Mã UC	UC-06
+Tên	Chấp nhận/Từ chối chuyến
+Actor	Tài xế
+Mục tiêu	Cho phép tài xế phản hồi yêu cầu chuyến
+Tiền điều kiện	Tài xế đang sẵn sàng và nhận được yêu cầu
+Luồng chính	1. Tài xế nhận thông báo.
+2. Xem thông tin chuyến.
+3. Chọn chấp nhận hoặc từ chối.
+4. Hệ thống cập nhật kết quả.
+Ngoại lệ	Tài xế không phản hồi trong thời gian quy định → hệ thống tìm tài xế khác.
+Hậu điều kiện	Chuyến được chấp nhận hoặc chuyển sang tài xế khác.
+UC-07 – Cập nhật trạng thái chuyến
+Thành phần	Nội dung
+Mã UC	UC-07
+Tên	Cập nhật trạng thái chuyến
+Actor	Tài xế
+Mục tiêu	Cập nhật tiến trình chuyến đi
+Tiền điều kiện	Tài xế đã nhận chuyến
+Luồng chính	1. Đã nhận chuyến.
+2. Đã đến điểm đón.
+3. Đã đón khách.
+4. Đang di chuyển.
+5. Hoàn thành chuyến.
+Ngoại lệ	Mất kết nối → hệ thống xử lý cập nhật lại khi kết nối được khôi phục.
+Hậu điều kiện	Trạng thái chuyến được cập nhật.
+UC-08 – Theo dõi chuyến đi
+Thành phần	Nội dung
+Mã UC	UC-08
+Tên	Theo dõi chuyến đi
+Actor	Khách hàng
+Mục tiêu	Theo dõi vị trí và trạng thái chuyến
+Tiền điều kiện	Chuyến đã được phân công tài xế
+Luồng chính	1. Khách hàng mở chuyến.
+2. Hệ thống hiển thị vị trí tài xế.
+3. Hiển thị trạng thái chuyến.
+4. Cập nhật thông tin trong quá trình di chuyển.
+Ngoại lệ	Không nhận được vị trí → hiển thị trạng thái vị trí không khả dụng.
+Hậu điều kiện	Khách hàng nắm được trạng thái chuyến.
+UC-09 – Tính cước
+Thành phần	Nội dung
+Mã UC	UC-09
+Tên	Tính cước
+Actor	Hệ thống
+Mục tiêu	Xác định số tiền khách hàng phải trả
+Tiền điều kiện	Chuyến đã hoàn thành
+Luồng chính	1. Lấy thông tin chuyến.
+2. Xác định loại dịch vụ.
+3. Tính cước theo quy tắc kinh doanh.
+4. Lưu số tiền.
+5. Thông báo cho khách hàng.
+Ngoại lệ	Thiếu dữ liệu chuyến → chuyển sang xử lý bởi nhân viên vận hành.
+Hậu điều kiện	Số tiền phải trả được xác định.
+UC-10 – Thanh toán
+Thành phần	Nội dung
+Mã UC	UC-10
+Tên	Thanh toán
+Actor	Khách hàng, Nhà cung cấp thanh toán
+Mục tiêu	Thanh toán tiền chuyến đi
+Tiền điều kiện	Chuyến đã hoàn thành và có số tiền phải trả
+Luồng chính	1. Khách hàng chọn phương thức thanh toán.
+2. Nếu tiền mặt → xác nhận thanh toán.
+3. Nếu điện tử → gửi yêu cầu đến nhà cung cấp thanh toán.
+4. Nhận kết quả.
+5. Lưu giao dịch.
+Ngoại lệ	Thanh toán điện tử thất bại → thông báo và cho phép thanh toán lại theo chính sách.
+Hậu điều kiện	Giao dịch được ghi nhận thành công hoặc thất bại.
+
+#B12: Tiêu chí chấp nhận AC
+# B12: Acceptance Criteria (AC) – Tiêu chí chấp nhận
+
+Acceptance Criteria (AC) là tập hợp các điều kiện cụ thể được dùng để xác nhận một tính năng đã đáp ứng đúng yêu cầu của khách hàng. Các tiêu chí này phải có thể kiểm tra và đánh giá được. Khi các tiêu chí được đáp ứng, chức năng có thể được nghiệm thu.
+
+## AC01 – Tìm và phân công tài xế
+
+- Khi khách hàng tạo yêu cầu đặt xe hợp lệ, hệ thống phải bắt đầu tìm tài xế phù hợp.
+- Hệ thống chỉ lựa chọn tài xế đang ở trạng thái sẵn sàng nhận chuyến.
+- Hệ thống ưu tiên tài xế phù hợp và gần vị trí khách hàng.
+- Khi tài xế chấp nhận, hệ thống phải xác nhận tài xế cho chuyến đi.
+- Nếu tài xế từ chối hoặc không phản hồi trong thời gian quy định, hệ thống phải tiếp tục tìm tài xế khác.
+- Nếu không còn tài xế phù hợp, hệ thống phải thông báo rõ ràng cho khách hàng.
+
+## AC02 – Thanh toán
+
+- Sau khi chuyến đi hoàn thành, hệ thống phải xác định số tiền khách hàng cần thanh toán.
+- Khách hàng có thể lựa chọn phương thức thanh toán được doanh nghiệp hỗ trợ.
+- Nếu thanh toán thành công, hệ thống phải ghi nhận giao dịch thành công.
+- Nếu thanh toán thất bại, hệ thống phải thông báo cho khách hàng.
+- Khách hàng được phép thực hiện thanh toán lại theo chính sách của doanh nghiệp.
+- Hệ thống không được lưu trực tiếp thông tin thẻ hoặc thông tin tài khoản thanh toán nhạy cảm.
+
+## AC03 – Theo dõi chuyến đi
+
+- Sau khi tài xế nhận chuyến, khách hàng phải xem được thông tin tài xế.
+- Khách hàng phải biết được trạng thái hiện tại của chuyến đi.
+- Khi tài xế đến điểm đón, trạng thái chuyến phải được cập nhật.
+- Khi tài xế đón khách, trạng thái chuyến phải được cập nhật.
+- Khi chuyến hoàn thành, hệ thống phải cập nhật trạng thái hoàn thành.
+- Khách hàng phải nhận được thông báo đối với các trạng thái quan trọng của chuyến đi.
+
+## AC04 – Hủy chuyến
+
+- Khách hàng chỉ được hủy chuyến trong thời gian và trạng thái được doanh nghiệp quy định.
+- Khi hủy thành công, trạng thái chuyến phải chuyển thành "Đã hủy".
+- Tài xế phải nhận được thông báo khi chuyến bị hủy.
+- Nếu có phí hủy, hệ thống phải xác định phí theo chính sách doanh nghiệp.
+- Thông tin hủy chuyến phải được lưu lại.
+
+## AC05 – Đăng nhập và phân quyền
+
+- Người dùng phải xác thực trước khi sử dụng các chức năng yêu cầu tài khoản.
+- Khách hàng chỉ được truy cập các chức năng dành cho khách hàng.
+- Tài xế chỉ được truy cập các chức năng dành cho tài xế.
+- Nhân viên vận hành chỉ được thực hiện các thao tác theo quyền được cấp.
+- Người không có quyền không được thực hiện các thao tác quản trị.
+- Các thao tác quản trị quan trọng phải được lưu vết.
+
+## AC06 – Thông báo
+
+- Khách hàng phải nhận được thông báo khi yêu cầu đặt xe được tiếp nhận.
+- Khách hàng phải nhận được thông báo khi tài xế nhận chuyến.
+- Khách hàng phải nhận được thông báo khi tài xế đến điểm đón.
+- Khách hàng phải nhận được thông báo khi chuyến hoàn thành.
+- Khách hàng phải nhận được thông báo về kết quả thanh toán.
+- Tài xế phải nhận được thông báo khi có chuyến mới hoặc thay đổi liên quan đến chuyến đang thực hiện.
