@@ -450,89 +450,63 @@ flowchart LR
     Driver((Driver))
     Staff((Operation Staff))
     Admin((Administrator))
+
     Payment((Payment Provider))
-    Notification((Notification Provider))
-    Map((Map/Location Provider))
+    Notify((Notification Provider))
+    Map((Map / Location))
 
     subgraph CAB["CAB SYSTEM"]
 
         UC1["Đăng ký / Đăng nhập"]
-        UC2["Quản lý thông tin cá nhân"]
+        UC2["Đặt xe"]
+        UC3["Theo dõi chuyến đi"]
+        UC4["Thanh toán"]
+        UC5["Xem lịch sử chuyến"]
+        UC6["Đánh giá tài xế"]
 
-        UC3["Tạo yêu cầu đặt xe"]
-        UC4["Tìm tài xế"]
-        UC5["Theo dõi chuyến đi"]
-        UC6["Xem lịch sử chuyến đi"]
-        UC7["Thanh toán"]
-        UC8["Hủy chuyến"]
-        UC9["Đánh giá tài xế"]
+        UC7["Quản lý hồ sơ & phương tiện"]
+        UC8["Nhận chuyến"]
+        UC9["Thực hiện chuyến"]
+        UC10["Cập nhật vị trí"]
 
-        UC10["Quản lý hồ sơ tài xế"]
-        UC11["Quản lý phương tiện"]
-        UC12["Cập nhật trạng thái hoạt động"]
-        UC13["Chấp nhận / Từ chối chuyến"]
-        UC14["Cập nhật trạng thái chuyến"]
-        UC15["Cập nhật vị trí"]
+        UC11["Quản lý khách hàng"]
+        UC12["Quản lý tài xế"]
+        UC13["Quản lý chuyến đi"]
+        UC14["Xử lý sự cố"]
 
-        UC16["Quản lý khách hàng"]
-        UC17["Quản lý tài xế"]
-        UC18["Quản lý phương tiện"]
-        UC19["Theo dõi chuyến đi"]
-        UC20["Xử lý chuyến bị lỗi"]
-        UC21["Tra cứu giao dịch"]
-
-        UC22["Quản lý tài khoản"]
-        UC23["Phân quyền"]
-        UC24["Xem báo cáo"]
-        UC25["Xem nhật ký hoạt động"]
-
-        UC26["Xử lý thanh toán điện tử"]
-        UC27["Gửi thông báo"]
-        UC28["Cung cấp thông tin vị trí"]
+        UC15["Quản lý tài khoản & phân quyền"]
+        UC16["Xem báo cáo"]
 
     end
 
     Customer --> UC1
     Customer --> UC2
     Customer --> UC3
+    Customer --> UC4
     Customer --> UC5
     Customer --> UC6
-    Customer --> UC7
-    Customer --> UC8
-    Customer --> UC9
 
     Driver --> UC1
+    Driver --> UC7
+    Driver --> UC8
+    Driver --> UC9
     Driver --> UC10
-    Driver --> UC11
-    Driver --> UC12
-    Driver --> UC13
-    Driver --> UC14
-    Driver --> UC15
 
     Staff --> UC1
-    Staff --> UC16
-    Staff --> UC17
-    Staff --> UC18
-    Staff --> UC19
-    Staff --> UC20
-    Staff --> UC21
+    Staff --> UC11
+    Staff --> UC12
+    Staff --> UC13
+    Staff --> UC14
 
     Admin --> UC1
-    Admin --> UC22
-    Admin --> UC23
-    Admin --> UC24
-    Admin --> UC25
+    Admin --> UC15
+    Admin --> UC16
 
-    Payment --> UC26
-    Notification --> UC27
-    Map --> UC28
-
-    UC3 --> UC4
-    UC4 --> UC28
-    UC4 --> UC27
-    UC7 --> UC26
-    UC5 --> UC27
-    UC13 --> UC27
+    UC2 --> Map
+    UC2 --> Notify
+    UC4 --> Payment
+    UC3 --> Notify
+    UC8 --> Notify
 ```
 
 # B12: Đặc tả UseCase
