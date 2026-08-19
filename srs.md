@@ -305,7 +305,7 @@ flowchart TD
 | **FR13** | Phân quyền        | Kiểm soát quyền truy cập các chức năng quản trị.                         |
 | **FR14** | Quản lý lịch sử   | Tra cứu lịch sử chuyến đi và giao dịch.                                  |
 
-## B8: Business Goal and Acceptance Criteria
+#B8: Business Goal and Acceptance Criteria
 
 | ID       | Business Goal                                | Acceptance Criteria                                                                                                                                                                                                                                                                                    |
 | -------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -323,4 +323,102 @@ flowchart TD
 | **BG12** | **Xử lý mất kết nối mạng**                   | • Không hủy chuyến ngay khi tài xế mất kết nối tạm thời.<br>• Ghi nhận thời điểm mất kết nối.<br>• Đồng bộ lại trạng thái khi tài xế kết nối lại.<br>• Xử lý theo chính sách nếu mất kết nối quá lâu.<br>• Thông báo cho khách hàng nếu ảnh hưởng đến chuyến.                                          |
 | **BG13** | **Nâng cao chất lượng dịch vụ**              | • Khách hàng được đánh giá sau khi chuyến hoàn thành.<br>• Không cho phép đánh giá chuyến chưa hoàn thành.<br>• Lưu kết quả đánh giá.<br>• Sử dụng dữ liệu đánh giá để theo dõi chất lượng tài xế.                                                                                                     |
 | **BG14** | **Hỗ trợ báo cáo hoạt động**                 | • Có thông tin số lượng chuyến.<br>• Có thông tin doanh thu.<br>• Có tỷ lệ chuyến hoàn thành.<br>• Có tỷ lệ chuyến hủy.<br>• Có thông tin hiệu quả hoạt động của tài xế.                                                                                                                               |
+#B9: Data Model
+1. Xác định các thực thể và thuộc tính
 
+| Thực thể | Thuộc tính |
+|---|---|
+| **Khách hàng (Customer)** | CustomerID, FullName, Email, Phone, Password, Address, CreatedAt, Status |
+| **Tài xế (Driver)** | DriverID, FullName, Email, Phone, Password, LicenseNumber, Status, CurrentLocation, CreatedAt |
+| **Phương tiện (Vehicle)** | VehicleID, DriverID, VehicleType, LicensePlate, Brand, Model, Color, Status |
+| **Chuyến đi (Trip)** | TripID, CustomerID, DriverID, VehicleID, PickupLocation, Destination, Distance, StartTime, EndTime, Status, Fare |
+| **Yêu cầu đặt xe (Booking)** | BookingID, CustomerID, PickupLocation, Destination, VehicleType, BookingTime, Status |
+| **Thanh toán (Payment)** | PaymentID, TripID, PaymentMethod, Amount, PaymentTime, PaymentStatus, TransactionCode |
+| **Đánh giá (Rating)** | RatingID, TripID, CustomerID, DriverID, RatingScore, Comment, CreatedAt |
+| **Thông báo (Notification)** | NotificationID, UserID, Title, Content, NotificationType, SentAt, Status |
+| **Nhân viên vận hành (Staff)** | StaffID, FullName, Email, Phone, Password, Role, Status |
+| **Giao dịch/Log hệ thống (AuditLog)** | LogID, UserID, Action, Description, CreatedAt, IPAddress |
+
+2. Mô tả một số thực thể chính
+
+### Customer – Khách hàng
+
+- **CustomerID:** Mã khách hàng.
+- **FullName:** Họ và tên.
+- **Email:** Email đăng nhập.
+- **Phone:** Số điện thoại.
+- **Password:** Mật khẩu tài khoản.
+- **Address:** Địa chỉ.
+- **CreatedAt:** Ngày tạo tài khoản.
+- **Status:** Trạng thái tài khoản.
+
+### Driver – Tài xế
+
+- **DriverID:** Mã tài xế.
+- **FullName:** Họ và tên.
+- **Email:** Email.
+- **Phone:** Số điện thoại.
+- **Password:** Mật khẩu.
+- **LicenseNumber:** Số giấy phép lái xe.
+- **Status:** Trạng thái hoạt động.
+- **CurrentLocation:** Vị trí hiện tại.
+- **CreatedAt:** Ngày tạo tài khoản.
+
+### Vehicle – Phương tiện
+
+- **VehicleID:** Mã phương tiện.
+- **DriverID:** Mã tài xế.
+- **VehicleType:** Loại xe.
+- **LicensePlate:** Biển số xe.
+- **Brand:** Hãng xe.
+- **Model:** Mẫu xe.
+- **Color:** Màu xe.
+- **Status:** Trạng thái phương tiện.
+
+### Trip – Chuyến đi
+
+- **TripID:** Mã chuyến.
+- **CustomerID:** Mã khách hàng.
+- **DriverID:** Mã tài xế.
+- **VehicleID:** Mã phương tiện.
+- **PickupLocation:** Điểm đón.
+- **Destination:** Điểm đến.
+- **Distance:** Quãng đường.
+- **StartTime:** Thời gian bắt đầu.
+- **EndTime:** Thời gian kết thúc.
+- **Status:** Trạng thái chuyến.
+- **Fare:** Cước phí.
+
+### Payment – Thanh toán
+
+- **PaymentID:** Mã thanh toán.
+- **TripID:** Mã chuyến.
+- **PaymentMethod:** Phương thức thanh toán.
+- **Amount:** Số tiền.
+- **PaymentTime:** Thời gian thanh toán.
+- **PaymentStatus:** Trạng thái thanh toán.
+- **TransactionCode:** Mã giao dịch.
+
+3. Quan hệ giữa các thực thể
+
+- **Customer 1 - N Booking:** Một khách hàng có thể tạo nhiều yêu cầu đặt xe.
+- **Customer 1 - N Trip:** Một khách hàng có thể thực hiện nhiều chuyến.
+- **Driver 1 - N Trip:** Một tài xế có thể thực hiện nhiều chuyến.
+- **Driver 1 - N Vehicle:** Một tài xế có thể có nhiều phương tiện.
+- **Vehicle 1 - N Trip:** Một phương tiện có thể được sử dụng cho nhiều chuyến.
+- **Trip 1 - 1 Payment:** Một chuyến có một giao dịch thanh toán.
+- **Trip 1 - 1 Rating:** Một chuyến có thể có một đánh giá.
+- **Customer 1 - N Rating:** Một khách hàng có thể tạo nhiều đánh giá.
+- **Driver 1 - N Rating:** Một tài xế có thể nhận nhiều đánh giá.
+- **User 1 - N Notification:** Một người dùng có thể nhận nhiều thông báo.
+- **User 1 - N AuditLog:** Một người dùng có thể tạo nhiều log thao tác.
+
+4. Các thực thể cốt lõi của MVP
+
+Trong phạm vi MVP 7 tuần, các thực thể quan trọng nhất là:
+
+**Customer → Driver → Vehicle → Booking → Trip → Payment → Rating**
+
+Đây là nhóm thực thể phục vụ trực tiếp quy trình:
+
+**Khách hàng → Đặt xe → Tìm tài xế → Thực hiện chuyến → Tính cước → Thanh toán → Đánh giá.**
