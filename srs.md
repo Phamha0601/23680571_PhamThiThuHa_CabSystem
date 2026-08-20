@@ -227,7 +227,6 @@
 - Lưu vết các thao tác quan trọng.
 
 # B5: Xác định Business Requirement
-# B4. Business Requirements
 
 | Mã | Tên | Diễn giải |
 |---|---|---|
