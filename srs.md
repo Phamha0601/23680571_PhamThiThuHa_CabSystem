@@ -729,9 +729,10 @@ flowchart LR
 ```
 
 ## Đặc tả UseCase
+1. UC01 – Đăng ký tài khoản
 | Thành phần         | Nội dung                                                                                                                                                                              |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mã UC**          | UC-01                                                                                                                                                                                 |
+| **Mã UC**          | UC01                                                                                                                                                                                 |
 | **Tên**            | Đăng ký tài khoản                                                                                                                                                                     |
 | **Actor**          | Khách hàng                                                                                                                                                                            |
 | **Mục tiêu**       | Tạo tài khoản để sử dụng dịch vụ CAB                                                                                                                                                  |
@@ -739,6 +740,115 @@ flowchart LR
 | **Luồng chính**    | 1. Khách hàng chọn đăng ký.<br>2. Nhập họ tên, email, số điện thoại và mật khẩu.<br>3. Hệ thống kiểm tra thông tin.<br>4. Hệ thống tạo tài khoản.<br>5. Thông báo đăng ký thành công. |
 | **Ngoại lệ**       | Email hoặc số điện thoại đã tồn tại → thông báo lỗi và yêu cầu nhập lại.                                                                                                              |
 | **Hậu điều kiện**  | Tài khoản khách hàng được tạo thành công.                                                                                                                                             |
+
+2. UC02 – Đăng nhập
+| Thành phần         | Nội dung                                                                                                                                        |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mã UC**          | UC-02                                                                                                                                           |
+| **Tên**            | Đăng nhập                                                                                                                                       |
+| **Actor**          | Khách hàng, Tài xế, Nhân viên vận hành                                                                                                          |
+| **Mục tiêu**       | Xác thực người dùng để sử dụng hệ thống                                                                                                         |
+| **Tiền điều kiện** | Người dùng đã có tài khoản                                                                                                                      |
+| **Luồng chính**    | 1. Nhập email/số điện thoại và mật khẩu.<br>2. Hệ thống xác thực.<br>3. Hệ thống xác định vai trò.<br>4. Cho phép truy cập chức năng tương ứng. |
+| **Ngoại lệ**       | Sai thông tin đăng nhập → thông báo lỗi.                                                                                                        |
+| **Hậu điều kiện**  | Người dùng đăng nhập thành công.                                                                                                                |
+
+3. UC03 – Quản lý thông tin cá nhân
+| Thành phần         | Nội dung                                                                                                                               |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mã UC**          | UC03                                                                                                                                  |
+| **Tên**            | Quản lý thông tin cá nhân                                                                                                              |
+| **Actor**          | Khách hàng, Tài xế                                                                                                                     |
+| **Mục tiêu**       | Cập nhật thông tin cá nhân                                                                                                             |
+| **Tiền điều kiện** | Người dùng đã đăng nhập                                                                                                                |
+| **Luồng chính**    | 1. Mở thông tin cá nhân.<br>2. Xem thông tin hiện tại.<br>3. Chỉnh sửa thông tin.<br>4. Lưu thay đổi.<br>5. Hệ thống cập nhật dữ liệu. |
+| **Ngoại lệ**       | Thông tin không hợp lệ → yêu cầu nhập lại.                                                                                             |
+| **Hậu điều kiện**  | Thông tin cá nhân được cập nhật.                                                                                                       |
+
+4. UC04 – Đặt chuyến xe
+| Thành phần         | Nội dung                                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mã UC**          | UC04                                                                                                                                            |
+| **Tên**            | Đặt chuyến xe                                                                                                                                    |
+| **Actor**          | Khách hàng                                                                                                                                       |
+| **Mục tiêu**       | Tạo yêu cầu đặt xe                                                                                                                               |
+| **Tiền điều kiện** | Khách hàng đã đăng nhập                                                                                                                          |
+| **Luồng chính**    | 1. Nhập điểm đón.<br>2. Nhập điểm đến.<br>3. Chọn loại xe.<br>4. Xác nhận đặt xe.<br>5. Hệ thống tạo yêu cầu.<br>6. Hệ thống bắt đầu tìm tài xế. |
+| **Ngoại lệ**       | Thiếu hoặc sai thông tin → yêu cầu khách hàng nhập lại.                                                                                          |
+| **Hậu điều kiện**  | Yêu cầu đặt chuyến được tạo.                                                                                                                     |
+
+5. UC05 – Tìm và phân công tài xế
+| Thành phần         | Nội dung                                                                                                                                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mã UC**          | UC05                                                                                                                                                                                                       |
+| **Tên**            | Tìm và phân công tài xế                                                                                                                                                                                     |
+| **Actor**          | Hệ thống                                                                                                                                                                                                    |
+| **Mục tiêu**       | Tìm tài xế phù hợp cho chuyến đi                                                                                                                                                                            |
+| **Tiền điều kiện** | Có yêu cầu đặt chuyến                                                                                                                                                                                       |
+| **Luồng chính**    | 1. Hệ thống lấy vị trí khách hàng.<br>2. Tìm tài xế đang sẵn sàng.<br>3. Ưu tiên tài xế phù hợp và gần khách hàng.<br>4. Gửi yêu cầu cho tài xế.<br>5. Tài xế chấp nhận.<br>6. Phân công tài xế cho chuyến. |
+| **Ngoại lệ**       | Tài xế từ chối hoặc không phản hồi → tìm tài xế khác.<br>Không có tài xế → thông báo cho khách hàng.                                                                                                        |
+| **Hậu điều kiện**  | Chuyến được phân công tài xế hoặc thông báo không tìm được tài xế.                                                                                                                                          |
+
+6. UC06 – Chấp nhận/Từ chối chuyến
+| Thành phần         | Nội dung                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Mã UC**          | UC06                                                                                                                     |
+| **Tên**            | Chấp nhận/Từ chối chuyến                                                                                                  |
+| **Actor**          | Tài xế                                                                                                                    |
+| **Mục tiêu**       | Cho phép tài xế phản hồi yêu cầu chuyến                                                                                   |
+| **Tiền điều kiện** | Tài xế đang sẵn sàng và nhận được yêu cầu                                                                                 |
+| **Luồng chính**    | 1. Tài xế nhận thông báo.<br>2. Xem thông tin chuyến.<br>3. Chọn chấp nhận hoặc từ chối.<br>4. Hệ thống cập nhật kết quả. |
+| **Ngoại lệ**       | Tài xế không phản hồi trong thời gian quy định → hệ thống tìm tài xế khác.                                                |
+| **Hậu điều kiện**  | Chuyến được chấp nhận hoặc chuyển sang tài xế khác.                                                                       |
+
+7. UC07 – Cập nhật trạng thái chuyến
+| Thành phần         | Nội dung                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **Mã UC**          | UC07                                                                                                        |
+| **Tên**            | Cập nhật trạng thái chuyến                                                                                   |
+| **Actor**          | Tài xế                                                                                                       |
+| **Mục tiêu**       | Cập nhật tiến trình chuyến đi                                                                                |
+| **Tiền điều kiện** | Tài xế đã nhận chuyến                                                                                        |
+| **Luồng chính**    | 1. Đã nhận chuyến.<br>2. Đã đến điểm đón.<br>3. Đã đón khách.<br>4. Đang di chuyển.<br>5. Hoàn thành chuyến. |
+| **Ngoại lệ**       | Mất kết nối → hệ thống xử lý cập nhật lại khi kết nối được khôi phục.                                        |
+| **Hậu điều kiện**  | Trạng thái chuyến được cập nhật.                                                                             |
+
+8. UC08 – Theo dõi chuyến đi
+| Thành phần         | Nội dung                                                                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mã UC**          | UC08                                                                                                                                                 |
+| **Tên**            | Theo dõi chuyến đi                                                                                                                                    |
+| **Actor**          | Khách hàng                                                                                                                                            |
+| **Mục tiêu**       | Theo dõi vị trí và trạng thái chuyến                                                                                                                  |
+| **Tiền điều kiện** | Chuyến đã được phân công tài xế                                                                                                                       |
+| **Luồng chính**    | 1. Khách hàng mở chuyến.<br>2. Hệ thống hiển thị vị trí tài xế.<br>3. Hiển thị trạng thái chuyến.<br>4. Cập nhật thông tin trong quá trình di chuyển. |
+| **Ngoại lệ**       | Không nhận được vị trí → hiển thị trạng thái vị trí không khả dụng.                                                                                   |
+| **Hậu điều kiện**  | Khách hàng nắm được trạng thái chuyến.                                                                                                                |
+
+9. UC09 – Tính cước
+| Thành phần         | Nội dung                                                                                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mã UC**          | UC09                                                                                                                                             |
+| **Tên**            | Tính cước                                                                                                                                         |
+| **Actor**          | Hệ thống                                                                                                                                          |
+| **Mục tiêu**       | Xác định số tiền khách hàng phải trả                                                                                                              |
+| **Tiền điều kiện** | Chuyến đã hoàn thành                                                                                                                              |
+| **Luồng chính**    | 1. Lấy thông tin chuyến.<br>2. Xác định loại dịch vụ.<br>3. Tính cước theo quy tắc kinh doanh.<br>4. Lưu số tiền.<br>5. Thông báo cho khách hàng. |
+| **Ngoại lệ**       | Thiếu dữ liệu chuyến → chuyển sang xử lý bởi nhân viên vận hành.                                                                                  |
+| **Hậu điều kiện**  | Số tiền phải trả được xác định.                                                                                                                   |
+
+10. UC10 – Thanh toán
+| Thành phần         | Nội dung                                                                                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mã UC**          | UC10                                                                                                                                                                                      |
+| **Tên**            | Thanh toán                                                                                                                                                                                 |
+| **Actor**          | Khách hàng, Nhà cung cấp thanh toán                                                                                                                                                        |
+| **Mục tiêu**       | Thanh toán tiền chuyến đi                                                                                                                                                                  |
+| **Tiền điều kiện** | Chuyến đã hoàn thành và có số tiền phải trả                                                                                                                                                |
+| **Luồng chính**    | 1. Khách hàng chọn phương thức thanh toán.<br>2. Nếu tiền mặt → xác nhận thanh toán.<br>3. Nếu điện tử → gửi yêu cầu đến nhà cung cấp thanh toán.<br>4. Nhận kết quả.<br>5. Lưu giao dịch. |
+| **Ngoại lệ**       | Thanh toán điện tử thất bại → thông báo và cho phép thanh toán lại theo chính sách.                                                                                                        |
+| **Hậu điều kiện**  | Giao dịch được ghi nhận thành công hoặc thất bại.                                                                                                                                          |
+
 
 # B12: Acceptance Criteria (AC) – Tiêu chí chấp nhận
 
