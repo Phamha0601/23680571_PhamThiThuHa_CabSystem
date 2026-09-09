@@ -1,0 +1,102 @@
+openapi: 3.0.0
+
+info:
+  title: Location Tracking
+  description: |
+    API for storing and updating driver locations
+    to support vehicle tracking and estimated arrival time.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+
+paths:
+
+  /driver-locations:
+    post:
+      summary: Update driver location
+      operationId: updateDriverLocation
+      tags:
+        - Driver Location
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverLocationRequest'
+      responses:
+        '200':
+          description: Driver location updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverLocation'
+        '400':
+          description: Invalid location information
+        '404':
+          description: Driver not found
+        '500':
+          description: Internal server error
+
+  /driver-locations/{driverId}:
+    get:
+      summary: Get driver current location
+      operationId: getDriverLocation
+      tags:
+        - Driver Location
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Driver current location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverLocation'
+        '404':
+          description: Driver location not found
+        '500':
+          description: Internal server error
+
+components:
+
+  schemas:
+
+    DriverLocationRequest:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          format: int64
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+      required:
+        - driverId
+        - latitude
+        - longitude
+
+    DriverLocation:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          format: int64
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        updatedAt:
+          type: string
+          format: date-time
