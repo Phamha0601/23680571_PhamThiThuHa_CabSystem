@@ -1,0 +1,113 @@
+openapi: 3.0.0
+
+info:
+  title: Trip Management
+  description: |
+    API for tracking and updating trip information and status.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+
+paths:
+
+  /trips/{tripId}:
+    get:
+      summary: Get trip information
+      operationId: getTrip
+      tags:
+        - Trips
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Trip information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '404':
+          description: Trip not found
+        '500':
+          description: Internal server error
+
+  /trips/{tripId}/status:
+    put:
+      summary: Update trip status
+      operationId: updateTripStatus
+      tags:
+        - Trips
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripStatusUpdate'
+      responses:
+        '200':
+          description: Trip status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '400':
+          description: Invalid trip status
+        '404':
+          description: Trip not found
+        '500':
+          description: Internal server error
+
+components:
+
+  schemas:
+
+    Trip:
+      type: object
+      properties:
+        tripId:
+          type: integer
+          format: int64
+        bookingId:
+          type: integer
+          format: int64
+        customerId:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum:
+            - assigned
+            - driver_arriving
+            - in_progress
+            - completed
+            - cancelled
+
+    TripStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - assigned
+            - driver_arriving
+            - in_progress
+            - completed
+            - cancelled
+      required:
+        - status
