@@ -1,0 +1,136 @@
+openapi: 3.0.0
+
+info:
+  title: Report Management API
+  description: |
+    API for providing reports about trips, revenue,
+    completion rate, cancellation rate, and driver performance.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+
+paths:
+
+  /reports:
+    get:
+      summary: Get operation report
+      operationId: getOperationReport
+      tags:
+        - Reports
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Operation report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationReport'
+        '400':
+          description: Invalid date range
+        '500':
+          description: Internal server error
+
+  /reports/drivers:
+    get:
+      summary: Get driver performance report
+      operationId: getDriverPerformanceReport
+      tags:
+        - Reports
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Driver performance report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DriverPerformance'
+        '400':
+          description: Invalid date range
+        '500':
+          description: Internal server error
+
+components:
+
+  schemas:
+
+    OperationReport:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        totalTrips:
+          type: integer
+          description: Total number of trips
+        totalRevenue:
+          type: number
+          format: double
+          description: Total revenue
+        completionRate:
+          type: number
+          format: double
+          description: Trip completion rate
+        cancellationRate:
+          type: number
+          format: double
+          description: Trip cancellation rate
+
+    DriverPerformance:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          format: int64
+        driverName:
+          type: string
+        totalTrips:
+          type: integer
+          description: Total number of trips completed by the driver
+        completedTrips:
+          type: integer
+          description: Number of completed trips
+        cancelledTrips:
+          type: integer
+          description: Number of cancelled trips
+        completionRate:
+          type: number
+          format: double
+        cancellationRate:
+          type: number
+          format: double
+        rating:
+          type: number
+          format: double
+          description: Driver performance rating
+
