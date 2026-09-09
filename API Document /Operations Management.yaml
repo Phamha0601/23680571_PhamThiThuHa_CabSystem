@@ -1,0 +1,166 @@
+openapi: 3.0.0
+
+info:
+  title: Operations Management API
+  description: |
+    API for managing customers, drivers, vehicles,
+    and trips for system operations.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+
+paths:
+
+  /operations/customers:
+    get:
+      summary: Get customers
+      operationId: getCustomers
+      tags:
+        - Operations
+      responses:
+        '200':
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+        '500':
+          description: Internal server error
+
+  /operations/drivers:
+    get:
+      summary: Get drivers
+      operationId: getDrivers
+      tags:
+        - Operations
+      responses:
+        '200':
+          description: List of drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Driver'
+        '500':
+          description: Internal server error
+
+  /operations/vehicles:
+    get:
+      summary: Get vehicles
+      operationId: getVehicles
+      tags:
+        - Operations
+      responses:
+        '200':
+          description: List of vehicles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+        '500':
+          description: Internal server error
+
+  /operations/trips:
+    get:
+      summary: Get trips
+      operationId: getTrips
+      tags:
+        - Operations
+      responses:
+        '200':
+          description: List of trips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+        '500':
+          description: Internal server error
+
+components:
+
+  schemas:
+
+    Customer:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+
+    Driver:
+      type: object
+      properties:
+        driverId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          enum:
+            - available
+            - busy
+            - offline
+
+    Vehicle:
+      type: object
+      properties:
+        vehicleId:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        vehicleType:
+          type: string
+          enum:
+            - car
+            - motorcycle
+        licensePlate:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+
+    Trip:
+      type: object
+      properties:
+        tripId:
+          type: integer
+          format: int64
+        customerId:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum:
+            - assigned
+            - driver_arriving
+            - in_progress
+            - completed
+            - cancelled
