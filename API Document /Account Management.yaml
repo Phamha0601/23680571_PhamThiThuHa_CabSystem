@@ -1,0 +1,290 @@
+openapi: 3.0.0
+info:
+  title: Account Management
+  description: |
+    This API allows users to register, log in, and update their personal information
+    within the CAB System.
+
+    ### Key Features:
+    - **Account Registration**: Allows customers to create a new account using their full name, email, phone number, and password.
+    - **User Login**: Allows customers, drivers, and operation staff to authenticate using their email or phone number and password.
+    - **Personal Information Management**: Allows customers and drivers to view and update their personal information.
+    - **Role Identification**: Identifies the user's role after successful authentication.
+    - **Access Control**: Users must be authenticated before accessing functions that require an account.
+
+    The API supports the account management requirements of the CAB System,
+    including customer registration, authentication, and personal information management.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+
+paths:
+
+  /customers/register:
+    post:
+      summary: Register a new customer account
+      operationId: registerCustomer
+      tags:
+        - User Account Management
+      requestBody:
+        description: Customer information required to create a new account
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRegistration'
+      responses:
+        '201':
+          description: Customer account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          description: Invalid registration information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email or phone number already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      summary: Log in to the CAB System
+      operationId: login
+      tags:
+        - User Account Management
+      requestBody:
+        description: User login credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid login information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid email, phone number, or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me:
+    get:
+      summary: Get current user's personal information
+      operationId: getCurrentUser
+      tags:
+        - User Account Management
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Personal information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: User is not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update current user's personal information
+      operationId: updateCurrentUser
+      tags:
+        - User Account Management
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Updated personal information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfile'
+      responses:
+        '200':
+          description: Personal information updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Invalid personal information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: User is not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    CustomerRegistration:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+          format: password
+      required:
+        - fullName
+        - email
+        - phone
+        - password
+
+    LoginRequest:
+      type: object
+      properties:
+        emailOrPhone:
+          type: string
+        password:
+          type: string
+          format: password
+      required:
+        - emailOrPhone
+        - password
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        role:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserProfile'
+      required:
+        - token
+        - role
+        - user
+
+    UserProfile:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+
+    UpdateUserProfile:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+
+    Customer:
+      type: object
+      properties:
+        customerId:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+      required:
+        - customerId
+        - fullName
+        - email
+        - phone
+        - status
+
+    Error:
+      type: object
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+
