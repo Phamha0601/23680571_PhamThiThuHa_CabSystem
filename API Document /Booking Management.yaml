@@ -1,0 +1,116 @@
+openapi: 3.0.0
+
+info:
+  title: Booking Management
+  description: |
+    API for booking a ride by entering pickup location,
+    destination, and vehicle type.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+
+paths:
+
+  /bookings:
+    post:
+      summary: Create a booking
+      operationId: createBooking
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Invalid booking information
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /bookings/{bookingId}:
+    get:
+      summary: Get booking information
+      operationId: getBooking
+      tags:
+        - Bookings
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Booking information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: Booking not found
+        '401':
+          description: Unauthorized
+
+components:
+
+  schemas:
+
+    BookingRequest:
+      type: object
+      properties:
+        pickupLocation:
+          type: string
+          description: Pickup location
+        destination:
+          type: string
+          description: Destination
+        vehicleType:
+          type: string
+          description: Type of vehicle
+          enum:
+            - car
+            - motorcycle
+      required:
+        - pickupLocation
+        - destination
+        - vehicleType
+
+    Booking:
+      type: object
+      properties:
+        bookingId:
+          type: integer
+          format: int64
+        customerId:
+          type: integer
+          format: int64
+        pickupLocation:
+          type: string
+        destination:
+          type: string
+        vehicleType:
+          type: string
+        bookingTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - cancelled
+
+   
