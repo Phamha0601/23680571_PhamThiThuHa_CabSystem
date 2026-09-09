@@ -1,0 +1,118 @@
+openapi: 3.0.0
+
+info:
+  title: Driver Rating API
+  description: |
+    API for allowing customers to rate drivers
+    after a trip is completed.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+
+paths:
+
+  /ratings:
+    post:
+      summary: Create a driver rating
+      operationId: createDriverRating
+      tags:
+        - Driver Ratings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingRequest'
+      responses:
+        '200':
+          description: Driver rating submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Invalid rating information
+        '404':
+          description: Trip or driver not found
+        '500':
+          description: Internal server error
+
+  /ratings/{ratingId}:
+    get:
+      summary: Get driver rating
+      operationId: getDriverRating
+      tags:
+        - Driver Ratings
+      parameters:
+        - name: ratingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Driver rating information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '404':
+          description: Rating not found
+        '500':
+          description: Internal server error
+
+components:
+
+  schemas:
+
+    RatingRequest:
+      type: object
+      properties:
+        tripId:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        customerId:
+          type: integer
+          format: int64
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+      required:
+        - tripId
+        - driverId
+        - customerId
+        - score
+
+    Rating:
+      type: object
+      properties:
+        ratingId:
+          type: integer
+          format: int64
+        tripId:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        customerId:
+          type: integer
+          format: int64
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
