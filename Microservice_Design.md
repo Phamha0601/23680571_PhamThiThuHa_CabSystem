@@ -6,7 +6,7 @@ Hệ thống CabSystem được phân tách thành các **Bounded Context** dự
 
 Mỗi Bounded Context tương ứng với một Microservice và sở hữu một Database riêng.
 
-Quy trình thiết kế cho **mỗi Bounded Context**:
+Quy trình thiết kế cho mỗi Bounded Context:
 
 ```text
 FR liên quan
@@ -28,6 +28,18 @@ Database
 ERD
 ```
 
+Nguyên tắc:
+
+```text
+1 Bounded Context
+        =
+1 Microservice
+        =
+1 Database
+```
+
+Các Microservice không truy cập trực tiếp Database của nhau.
+
 ---
 
 # 2. BC01 – IDENTITY & ACCESS
@@ -39,17 +51,7 @@ ERD
 | FR01 | Quản lý tài khoản |
 | FR13 | Phân quyền        |
 
-### Phạm vi
-
-BC01 chịu trách nhiệm:
-
-* Đăng ký tài khoản.
-* Đăng nhập.
-* Cập nhật thông tin tài khoản.
-* Xác thực người dùng.
-* Quản lý Role.
-* Quản lý Permission.
-* Kiểm soát quyền truy cập.
+BC01 chịu trách nhiệm đăng ký, đăng nhập, quản lý tài khoản, xác thực và phân quyền người dùng.
 
 ---
 
@@ -62,7 +64,7 @@ flowchart TD
     C --> D[Đăng nhập]
     D --> E[Xác thực tài khoản]
     E --> F[Kiểm tra Role và Permission]
-    F --> G[Cho phép truy cập chức năng]
+    F --> G[Cho phép truy cập]
     G --> H[Cập nhật thông tin tài khoản]
 ```
 
@@ -70,14 +72,14 @@ flowchart TD
 
 ## 2.3. Ubiquitous Language
 
-| Thuật ngữ      | Định nghĩa                     |
-| -------------- | ------------------------------ |
-| Account        | Tài khoản của người dùng       |
-| Authentication | Xác thực danh tính người dùng  |
-| Authorization  | Kiểm soát quyền truy cập       |
-| Role           | Vai trò của tài khoản          |
-| Permission     | Quyền thực hiện một chức năng  |
-| Audit Log      | Nhật ký thao tác của tài khoản |
+| Thuật ngữ      | Định nghĩa                |
+| -------------- | ------------------------- |
+| Account        | Tài khoản người dùng      |
+| Authentication | Xác thực người dùng       |
+| Authorization  | Kiểm soát quyền truy cập  |
+| Role           | Vai trò của tài khoản     |
+| Permission     | Quyền thực hiện chức năng |
+| Audit Log      | Nhật ký thao tác          |
 
 ---
 
@@ -85,40 +87,39 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class Account {
-        +UUID accountId
-        +String email
-        +String phone
-        +String passwordHash
-        +String status
-        +DateTime createdAt
-        +DateTime updatedAt
+        UUID accountId
+        String email
+        String phone
+        String passwordHash
+        String status
+        DateTime createdAt
+        DateTime updatedAt
     }
 
     class Role {
-        +UUID roleId
-        +String roleName
+        UUID roleId
+        String roleName
     }
 
     class Permission {
-        +UUID permissionId
-        +String actionCode
-        +String description
+        UUID permissionId
+        String actionCode
+        String description
     }
 
     class AuditLog {
-        +UUID logId
-        +UUID accountId
-        +String action
-        +String description
-        +String ipAddress
-        +DateTime createdAt
+        UUID logId
+        UUID accountId
+        String action
+        String description
+        String ipAddress
+        DateTime createdAt
     }
 
-    Account "*" -- "*" Role
-    Role "*" -- "*" Permission
-    Account "1" -- "*" AuditLog
+    Account "1" --> "*" AuditLog
+    Account "*" --> "*" Role
+    Role "*" --> "*" Permission
 ```
 
 ---
@@ -129,13 +130,13 @@ classDiagram
 | ---------------- | ---------- | ------------------ |
 | Register Account | Account    | Tạo tài khoản      |
 | Login            | Account    | Xác thực tài khoản |
-| Update Account   | Account    | Cập nhật thông tin |
 | Get Account      | Account    | Xem thông tin      |
+| Update Account   | Account    | Cập nhật thông tin |
 | Assign Role      | Role       | Gán vai trò        |
 | Check Permission | Permission | Kiểm tra quyền     |
 | Create Audit Log | AuditLog   | Lưu nhật ký        |
 
-> Tên HTTP Method và Endpoint phải lấy đúng từ `API Document/` của repository.
+> Tên HTTP Method và Endpoint cụ thể phải lấy đúng từ thư mục `API Document/` của repository.
 
 ---
 
@@ -204,7 +205,7 @@ Lý do:
 * Account, Role và Permission có quan hệ rõ ràng.
 * Cần Transaction.
 * Cần đảm bảo tính nhất quán dữ liệu.
-* Có nhiều quan hệ Many-to-Many.
+* Có quan hệ nhiều-nhiều giữa Account, Role và Permission.
 
 ---
 
@@ -233,7 +234,6 @@ Tables:
 
 ```mermaid
 erDiagram
-
     ACCOUNT ||--o{ ACCOUNT_ROLE : has
     ROLE ||--o{ ACCOUNT_ROLE : assigned
     ROLE ||--o{ ROLE_PERMISSION : has
@@ -276,6 +276,7 @@ erDiagram
         uuid account_id
         varchar action
         text description
+        varchar ip_address
         timestamp created_at
     }
 ```
@@ -290,9 +291,7 @@ erDiagram
 | ---- | --------- |
 | FR02 | Đặt xe    |
 
-### Phạm vi
-
-BC02 chịu trách nhiệm tiếp nhận và quản lý yêu cầu đặt xe của khách hàng.
+BC02 chịu trách nhiệm tiếp nhận và quản lý yêu cầu đặt xe.
 
 ---
 
@@ -314,14 +313,14 @@ flowchart TD
 
 ## 3.3. Ubiquitous Language
 
-| Thuật ngữ       | Định nghĩa             |
-| --------------- | ---------------------- |
-| Booking         | Yêu cầu đặt xe         |
-| Pickup Location | Điểm đón khách         |
-| Destination     | Điểm đến               |
-| Vehicle Type    | Loại phương tiện       |
-| Booking Status  | Trạng thái của Booking |
-| Cancel Booking  | Hủy yêu cầu đặt xe     |
+| Thuật ngữ       | Định nghĩa         |
+| --------------- | ------------------ |
+| Booking         | Yêu cầu đặt xe     |
+| Pickup Location | Điểm đón           |
+| Destination     | Điểm đến           |
+| Vehicle Type    | Loại phương tiện   |
+| Booking Status  | Trạng thái Booking |
+| Cancel Booking  | Hủy yêu cầu đặt xe |
 
 ---
 
@@ -329,17 +328,16 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class Booking {
-        +UUID bookingId
-        +UUID customerId
-        +String pickupLocation
-        +String destination
-        +String vehicleType
-        +DateTime bookingTime
-        +String status
-        +DateTime createdAt
-        +DateTime cancelledAt
+        UUID bookingId
+        UUID customerId
+        String pickupLocation
+        String destination
+        String vehicleType
+        DateTime bookingTime
+        String status
+        DateTime createdAt
+        DateTime cancelledAt
     }
 ```
 
@@ -347,12 +345,12 @@ classDiagram
 
 ## 3.5. Bảng API
 
-| API nghiệp vụ  | Entity  | Chức năng                        |
-| -------------- | ------- | -------------------------------- |
-| Create Booking | Booking | Tạo yêu cầu đặt xe               |
-| Get Booking    | Booking | Xem thông tin Booking            |
-| Cancel Booking | Booking | Hủy Booking                      |
-| Update Booking | Booking | Cập nhật thông tin nếu được phép |
+| API nghiệp vụ  | Entity  | Chức năng          |
+| -------------- | ------- | ------------------ |
+| Create Booking | Booking | Tạo yêu cầu đặt xe |
+| Get Booking    | Booking | Xem Booking        |
+| Cancel Booking | Booking | Hủy Booking        |
+| Update Booking | Booking | Cập nhật Booking   |
 
 ---
 
@@ -380,7 +378,7 @@ classDiagram
 
 Lý do:
 
-* Booking có cấu trúc dữ liệu rõ ràng.
+* Booking có cấu trúc rõ ràng.
 * Trạng thái Booking cần nhất quán.
 * Cần Transaction khi tạo hoặc hủy Booking.
 
@@ -404,23 +402,22 @@ Table:
 
 ### ERD
 
+Vì Database chỉ có một Entity nên sử dụng sơ đồ Entity dạng `flowchart` thay vì `erDiagram`.
+
 ```mermaid
-erDiagram
+flowchart LR
+    B["BOOKING"]
 
-    BOOKING {
-        uuid booking_id PK
-        uuid customer_id
-        varchar pickup_location
-        varchar destination
-        varchar vehicle_type
-        timestamp booking_time
-        varchar status
-        timestamp created_at
-        timestamp cancelled_at
-    }
+    B --> B1["booking_id - PK"]
+    B --> B2["customer_id - Reference ID"]
+    B --> B3["pickup_location"]
+    B --> B4["destination"]
+    B --> B5["vehicle_type"]
+    B --> B6["booking_time"]
+    B --> B7["status"]
+    B --> B8["created_at"]
+    B --> B9["cancelled_at"]
 ```
-
-`customer_id` là Reference ID đến Identity/Operations Context, không tạo Foreign Key xuyên Database.
 
 ---
 
@@ -444,13 +441,13 @@ flowchart TD
     C --> D[Kiểm tra trạng thái sẵn sàng]
     D --> E{Có tài xế phù hợp?}
 
-    E -- Không --> F[Thông báo không tìm thấy]
-    E -- Có --> G[Gửi yêu cầu cho tài xế]
+    E -->|Không| F[Thông báo không tìm thấy]
+    E -->|Có| G[Gửi yêu cầu cho tài xế]
 
     G --> H{Tài xế phản hồi?}
-    H -- Từ chối --> B
-    H -- Không phản hồi --> B
-    H -- Chấp nhận --> I[Phân công tài xế]
+    H -->|Từ chối| B
+    H -->|Không phản hồi| B
+    H -->|Chấp nhận| I[Phân công tài xế]
     I --> J[Thông báo khách hàng]
 ```
 
@@ -458,16 +455,16 @@ flowchart TD
 
 ## 4.3. Ubiquitous Language
 
-| Thuật ngữ        | Định nghĩa                  |
-| ---------------- | --------------------------- |
-| Driver           | Tài xế                      |
-| Driver Status    | Trạng thái hoạt động        |
-| Available Driver | Tài xế sẵn sàng nhận chuyến |
-| Driver Location  | Vị trí tài xế               |
-| Dispatch Request | Yêu cầu gửi chuyến          |
-| Assignment       | Kết quả phân công           |
-| Accept           | Tài xế chấp nhận            |
-| Reject           | Tài xế từ chối              |
+| Thuật ngữ        | Định nghĩa           |
+| ---------------- | -------------------- |
+| Driver           | Tài xế               |
+| Driver Status    | Trạng thái hoạt động |
+| Available Driver | Tài xế sẵn sàng      |
+| Driver Location  | Vị trí tài xế        |
+| Dispatch Request | Yêu cầu gửi chuyến   |
+| Assignment       | Kết quả phân công    |
+| Accept           | Chấp nhận            |
+| Reject           | Từ chối              |
 
 ---
 
@@ -475,43 +472,42 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class Driver {
-        +UUID driverId
-        +UUID accountId
-        +String status
-        +String currentLocation
-        +Boolean availability
+        UUID driverId
+        UUID accountId
+        String status
+        String currentLocation
+        Boolean availability
     }
 
     class Vehicle {
-        +UUID vehicleId
-        +UUID driverId
-        +String vehicleType
-        +String licensePlate
-        +String status
+        UUID vehicleId
+        UUID driverId
+        String vehicleType
+        String licensePlate
+        String status
     }
 
     class DispatchRequest {
-        +UUID dispatchRequestId
-        +UUID bookingId
-        +UUID driverId
-        +DateTime sentAt
-        +DateTime responseDeadline
-        +String status
+        UUID dispatchRequestId
+        UUID bookingId
+        UUID driverId
+        DateTime sentAt
+        DateTime responseDeadline
+        String status
     }
 
     class DriverAssignment {
-        +UUID assignmentId
-        +UUID bookingId
-        +UUID driverId
-        +DateTime assignedAt
-        +String status
+        UUID assignmentId
+        UUID bookingId
+        UUID driverId
+        DateTime assignedAt
+        String status
     }
 
-    Driver "1" -- "*" Vehicle
-    Driver "1" -- "*" DispatchRequest
-    Driver "1" -- "*" DriverAssignment
+    Driver "1" --> "*" Vehicle
+    Driver "1" --> "*" DispatchRequest
+    Driver "1" --> "*" DriverAssignment
 ```
 
 ---
@@ -583,7 +579,7 @@ Lý do:
 
 * Driver, Vehicle và Assignment có quan hệ.
 * Cần đảm bảo trạng thái phân công nhất quán.
-* Dispatch Request cần lưu lịch sử xử lý.
+* Dispatch Request cần lưu trạng thái xử lý.
 
 ---
 
@@ -610,7 +606,6 @@ Tables:
 
 ```mermaid
 erDiagram
-
     DRIVER ||--o{ VEHICLE : owns
     DRIVER ||--o{ DISPATCH_REQUEST : receives
     DRIVER ||--o{ DRIVER_ASSIGNMENT : assigned
@@ -621,6 +616,7 @@ erDiagram
         varchar status
         varchar current_location
         boolean availability
+        timestamp created_at
     }
 
     VEHICLE {
@@ -671,9 +667,9 @@ flowchart TD
     B --> C[Theo dõi vị trí]
     C --> D[Tài xế đến điểm đón]
     D --> E[Đón khách]
-    E --> F[Trip In Progress]
+    E --> F[Trip đang thực hiện]
     F --> G[Đến điểm đến]
-    G --> H[Trip Completed]
+    G --> H[Trip hoàn thành]
     H --> I[Lưu lịch sử chuyến]
 ```
 
@@ -697,38 +693,37 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class Trip {
-        +UUID tripId
-        +UUID bookingId
-        +UUID customerId
-        +UUID driverId
-        +UUID vehicleId
-        +String pickupLocation
-        +String destination
-        +Decimal distance
-        +DateTime startTime
-        +DateTime endTime
-        +String status
+        UUID tripId
+        UUID bookingId
+        UUID customerId
+        UUID driverId
+        UUID vehicleId
+        String pickupLocation
+        String destination
+        Decimal distance
+        DateTime startTime
+        DateTime endTime
+        String status
     }
 
     class TripLocation {
-        +UUID locationId
-        +UUID tripId
-        +Decimal latitude
-        +Decimal longitude
-        +DateTime recordedAt
+        UUID locationId
+        UUID tripId
+        Decimal latitude
+        Decimal longitude
+        DateTime recordedAt
     }
 
     class TripStatusHistory {
-        +UUID statusHistoryId
-        +UUID tripId
-        +String status
-        +DateTime changedAt
+        UUID statusHistoryId
+        UUID tripId
+        String status
+        DateTime changedAt
     }
 
-    Trip "1" -- "*" TripLocation
-    Trip "1" -- "*" TripStatusHistory
+    Trip "1" --> "*" TripLocation
+    Trip "1" --> "*" TripStatusHistory
 ```
 
 ---
@@ -793,8 +788,8 @@ Lý do:
 
 * Trip có cấu trúc rõ ràng.
 * Cần Transaction.
-* Trip Status History cần đảm bảo tính nhất quán.
-* Có quan hệ giữa Trip và Location/History.
+* Trip Status History cần nhất quán.
+* Có quan hệ giữa Trip, Location và History.
 
 ---
 
@@ -820,7 +815,6 @@ Tables:
 
 ```mermaid
 erDiagram
-
     TRIP ||--o{ TRIP_LOCATION : has
     TRIP ||--o{ TRIP_STATUS_HISTORY : records
 
@@ -877,7 +871,7 @@ flowchart TD
     E --> F[Tính giá theo khoảng cách]
     F --> G[Tính tổng tiền]
     G --> H[Lưu Fare]
-    H --> I[Gửi kết quả thanh toán]
+    H --> I[Gửi kết quả]
 ```
 
 ---
@@ -899,29 +893,28 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class FareRule {
-        +UUID fareRuleId
-        +String vehicleType
-        +Decimal basePrice
-        +Decimal pricePerKm
-        +String status
-        +Date effectiveFrom
-        +Date effectiveTo
+        UUID fareRuleId
+        String vehicleType
+        Decimal basePrice
+        Decimal pricePerKm
+        String status
+        Date effectiveFrom
+        Date effectiveTo
     }
 
     class Fare {
-        +UUID fareId
-        +UUID fareRuleId
-        +UUID tripId
-        +Decimal distance
-        +Decimal baseFare
-        +Decimal distanceFare
-        +Decimal totalAmount
-        +DateTime calculatedAt
+        UUID fareId
+        UUID fareRuleId
+        UUID tripId
+        Decimal distance
+        Decimal baseFare
+        Decimal distanceFare
+        Decimal totalAmount
+        DateTime calculatedAt
     }
 
-    FareRule "1" -- "*" Fare
+    FareRule "1" --> "*" Fare
 ```
 
 ---
@@ -972,7 +965,7 @@ classDiagram
 Lý do:
 
 * Giá tiền cần độ chính xác cao.
-* Fare Rule cần quản lý hiệu lực theo thời gian.
+* Fare Rule cần quản lý hiệu lực.
 * Cần tính nhất quán dữ liệu.
 
 ---
@@ -998,7 +991,6 @@ Tables:
 
 ```mermaid
 erDiagram
-
     FARE_RULE ||--o{ FARE : applies
 
     FARE_RULE {
@@ -1040,15 +1032,16 @@ erDiagram
 
 ```mermaid
 flowchart TD
-    A[Nhận tổng tiền] --> B[Chọn phương thức thanh toán]
+    A[Nhận tổng tiền] --> B[Chọn phương thức]
     B --> C{Phương thức}
     C -->|Tiền mặt| D[Xác nhận tiền mặt]
     C -->|Điện tử| E[Gửi Payment Provider]
-    E --> F{Thanh toán thành công?}
+    E --> F{Thanh toán thành công}
     F -->|Không| G[Ghi nhận thất bại]
     F -->|Có| H[Ghi nhận thành công]
     D --> H
-    H --> I[Lưu giao dịch]
+    G --> I[Lưu giao dịch]
+    H --> I
 ```
 
 ---
@@ -1070,27 +1063,26 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class Payment {
-        +UUID paymentId
-        +UUID tripId
-        +Decimal amount
-        +String paymentMethod
-        +String paymentStatus
-        +String transactionCode
-        +DateTime paymentTime
+        UUID paymentId
+        UUID tripId
+        Decimal amount
+        String paymentMethod
+        String paymentStatus
+        String transactionCode
+        DateTime paymentTime
     }
 
     class PaymentAttempt {
-        +UUID attemptId
-        +UUID paymentId
-        +DateTime attemptTime
-        +String status
-        +String responseCode
-        +String failureReason
+        UUID attemptId
+        UUID paymentId
+        DateTime attemptTime
+        String status
+        String responseCode
+        String failureReason
     }
 
-    Payment "1" -- "*" PaymentAttempt
+    Payment "1" --> "*" PaymentAttempt
 ```
 
 ---
@@ -1143,7 +1135,7 @@ Lý do:
 * Payment là dữ liệu giao dịch.
 * Yêu cầu tính nhất quán cao.
 * Cần Transaction.
-* Cần lưu lịch sử các lần thanh toán.
+* Cần lưu lịch sử thanh toán.
 
 ---
 
@@ -1168,7 +1160,6 @@ Tables:
 
 ```mermaid
 erDiagram
-
     PAYMENT ||--o{ PAYMENT_ATTEMPT : has
 
     PAYMENT {
@@ -1235,19 +1226,18 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class Notification {
-        +UUID notificationId
-        +UUID userId
-        +String title
-        +String content
-        +String notificationType
-        +String channel
-        +String deliveryStatus
-        +String readStatus
-        +DateTime sentAt
-        +DateTime readAt
-        +DateTime createdAt
+        UUID notificationId
+        UUID userId
+        String title
+        String content
+        String notificationType
+        String channel
+        String deliveryStatus
+        String readStatus
+        DateTime sentAt
+        DateTime readAt
+        DateTime createdAt
     }
 ```
 
@@ -1268,19 +1258,19 @@ classDiagram
 
 ### NOTIFICATION
 
-| Field             | Type     |
-| ----------------- | -------- |
-| notification_id   | UUID     |
-| user_id           | UUID     |
-| title             | String   |
-| content           | String   |
-| notification_type | String   |
-| channel           | String   |
-| delivery_status   | String   |
-| read_status       | String   |
-| sent_at           | DateTime |
-| read_at           | DateTime |
-| created_at        | DateTime |
+| Field             | Type      | Key          |
+| ----------------- | --------- | ------------ |
+| notification_id   | UUID      | Primary Key  |
+| user_id           | UUID      | Reference ID |
+| title             | VARCHAR   |              |
+| content           | TEXT      |              |
+| notification_type | VARCHAR   |              |
+| channel           | VARCHAR   |              |
+| delivery_status   | VARCHAR   |              |
+| read_status       | VARCHAR   |              |
+| sent_at           | TIMESTAMP |              |
+| read_at           | TIMESTAMP |              |
+| created_at        | TIMESTAMP |              |
 
 ---
 
@@ -1290,10 +1280,9 @@ classDiagram
 
 Lý do:
 
-* Notification có nội dung linh hoạt.
-* Có thể có nhiều loại notification.
-* Metadata của từng kênh có thể khác nhau.
-* Phù hợp với dữ liệu document.
+* Nội dung Notification có thể linh hoạt.
+* Metadata của các Channel có thể khác nhau.
+* Mô hình Document phù hợp với dữ liệu thông báo.
 
 ---
 
@@ -1313,18 +1302,23 @@ Collection:
 - notifications
 ```
 
-### ERD / Document Model
+### Document Model
 
 ```mermaid
 flowchart LR
-    N[Notification Document] --> ID[notification_id]
-    N --> U[user_id]
-    N --> T[title]
-    N --> C[content]
-    N --> TYPE[notification_type]
-    N --> CHANNEL[channel]
-    N --> DS[delivery_status]
-    N --> RS[read_status]
+    N["NOTIFICATION DOCUMENT"]
+
+    N --> A["notification_id"]
+    N --> B["user_id"]
+    N --> C["title"]
+    N --> D["content"]
+    N --> E["notification_type"]
+    N --> F["channel"]
+    N --> G["delivery_status"]
+    N --> H["read_status"]
+    N --> I["sent_at"]
+    N --> J["read_at"]
+    N --> K["created_at"]
 ```
 
 ---
@@ -1369,15 +1363,14 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class Rating {
-        +UUID ratingId
-        +UUID tripId
-        +UUID customerId
-        +UUID driverId
-        +Integer ratingScore
-        +String comment
-        +DateTime createdAt
+        UUID ratingId
+        UUID tripId
+        UUID customerId
+        UUID driverId
+        Integer ratingScore
+        String comment
+        DateTime createdAt
     }
 ```
 
@@ -1385,11 +1378,11 @@ classDiagram
 
 ## 9.5. Bảng API
 
-| API nghiệp vụ      | Entity | Chức năng               |
-| ------------------ | ------ | ----------------------- |
-| Create Rating      | Rating | Tạo đánh giá            |
-| Get Rating         | Rating | Xem đánh giá            |
-| Get Driver Ratings | Rating | Xem đánh giá của tài xế |
+| API nghiệp vụ      | Entity | Chức năng           |
+| ------------------ | ------ | ------------------- |
+| Create Rating      | Rating | Tạo đánh giá        |
+| Get Rating         | Rating | Xem đánh giá        |
+| Get Driver Ratings | Rating | Xem đánh giá tài xế |
 
 ---
 
@@ -1407,13 +1400,13 @@ classDiagram
 | comment      | TEXT      |              |
 | created_at   | TIMESTAMP |              |
 
-Constraint:
+### Constraint
 
 ```text
 UNIQUE(trip_id)
 ```
 
-Mỗi chuyến chỉ có một đánh giá của khách hàng.
+Mỗi chuyến chỉ được tạo một Rating.
 
 ---
 
@@ -1425,7 +1418,7 @@ Lý do:
 
 * Rating có cấu trúc rõ ràng.
 * Cần ràng buộc dữ liệu.
-* Có thể truy vấn thống kê đánh giá.
+* Có thể truy vấn và thống kê điểm đánh giá.
 
 ---
 
@@ -1447,18 +1440,19 @@ Table:
 
 ### ERD
 
-```mermaid
-erDiagram
+Database chỉ có một Entity nên sử dụng `flowchart`, tránh lỗi `erDiagram` của GitHub.
 
-    RATING {
-        uuid rating_id PK
-        uuid trip_id
-        uuid customer_id
-        uuid driver_id
-        int rating_score
-        text comment
-        timestamp created_at
-    }
+```mermaid
+flowchart LR
+    R["RATING"]
+
+    R --> A["rating_id - PK"]
+    R --> B["trip_id - Reference ID"]
+    R --> C["customer_id - Reference ID"]
+    R --> D["driver_id - Reference ID"]
+    R --> E["rating_score"]
+    R --> F["comment"]
+    R --> G["created_at"]
 ```
 
 ---
@@ -1513,58 +1507,57 @@ flowchart TD
 
 ```mermaid
 classDiagram
-
     class CustomerView {
-        +UUID customerId
-        +UUID accountId
-        +String customerName
-        +String phone
-        +String status
+        UUID customerId
+        UUID accountId
+        String customerName
+        String phone
+        String status
     }
 
     class DriverView {
-        +UUID driverId
-        +String driverName
-        +String status
-        +Boolean availability
+        UUID driverId
+        String driverName
+        String status
+        Boolean availability
     }
 
     class VehicleView {
-        +UUID vehicleId
-        +UUID driverId
-        +String vehicleType
-        +String licensePlate
-        +String status
+        UUID vehicleId
+        UUID driverId
+        String vehicleType
+        String licensePlate
+        String status
     }
 
     class OperationalTripView {
-        +UUID tripId
-        +UUID customerId
-        +UUID driverId
-        +UUID vehicleId
-        +String status
-        +DateTime startTime
-        +DateTime endTime
+        UUID tripId
+        UUID customerId
+        UUID driverId
+        UUID vehicleId
+        String status
+        DateTime startTime
+        DateTime endTime
     }
 
     class Report {
-        +UUID reportId
-        +String reportType
-        +Date fromDate
-        +Date toDate
-        +DateTime generatedAt
-        +UUID generatedBy
+        UUID reportId
+        String reportType
+        Date fromDate
+        Date toDate
+        DateTime generatedAt
+        UUID generatedBy
     }
 
     class ReportStatistic {
-        +UUID statisticId
-        +UUID reportId
-        +String metricName
-        +Decimal metricValue
+        UUID statisticId
+        UUID reportId
+        String metricName
+        Decimal metricValue
     }
 
-    Report "1" -- "*" ReportStatistic
-    DriverView "1" -- "*" VehicleView
+    Report "1" --> "*" ReportStatistic
+    DriverView "1" --> "*" VehicleView
 ```
 
 ---
@@ -1656,8 +1649,8 @@ Lý do:
 
 * Dữ liệu vận hành có cấu trúc.
 * Báo cáo cần truy vấn tổng hợp.
-* Có nhiều quan hệ giữa Report và Statistic.
-* Hỗ trợ tốt các truy vấn thống kê.
+* Report và ReportStatistic có quan hệ.
+* Phù hợp với các truy vấn thống kê.
 
 ---
 
@@ -1686,7 +1679,6 @@ Tables:
 
 ```mermaid
 erDiagram
-
     REPORT ||--o{ REPORT_STATISTIC : contains
 
     REPORT {
@@ -1704,56 +1696,35 @@ erDiagram
         varchar metric_name
         decimal metric_value
     }
+```
 
-    CUSTOMER_VIEW {
-        uuid customer_id PK
-        uuid account_id
-        varchar customer_name
-        varchar phone
-        varchar status
-    }
+Các View còn lại là các bảng dữ liệu vận hành độc lập:
 
-    DRIVER_VIEW {
-        uuid driver_id PK
-        varchar driver_name
-        varchar status
-        boolean availability
-    }
+```mermaid
+flowchart LR
+    A["CUSTOMER_VIEW"]
+    B["DRIVER_VIEW"]
+    C["VEHICLE_VIEW"]
+    D["OPERATIONAL_TRIP_VIEW"]
 
-    VEHICLE_VIEW {
-        uuid vehicle_id PK
-        uuid driver_id
-        varchar vehicle_type
-        varchar license_plate
-        varchar status
-    }
-
-    OPERATIONAL_TRIP_VIEW {
-        uuid trip_id PK
-        uuid customer_id
-        uuid driver_id
-        uuid vehicle_id
-        varchar status
-        timestamp start_time
-        timestamp end_time
-    }
+    B --> C
 ```
 
 ---
 
 # 11. TỔNG HỢP 9 BOUNDED CONTEXT
 
-| BC                          | FR               | Microservice            | Database           | DB Type    |
-| --------------------------- | ---------------- | ----------------------- | ------------------ | ---------- |
-| BC01 Identity & Access      | FR01, FR13       | identity-service        | identity_db        | PostgreSQL |
-| BC02 Booking                | FR02             | booking-service         | booking_db         | PostgreSQL |
-| BC03 Driver & Dispatch      | FR03, FR04       | driver-dispatch-service | driver_dispatch_db | PostgreSQL |
-| BC04 Trip Management        | FR05, FR06, FR14 | trip-service            | trip_db            | PostgreSQL |
-| BC05 Pricing & Fare         | FR07             | pricing-service         | pricing_db         | PostgreSQL |
-| BC06 Payment                | FR08, FR14       | payment-service         | payment_db         | PostgreSQL |
-| BC07 Notification           | FR09             | notification-service    | notification_db    | MongoDB    |
-| BC08 Rating & Feedback      | FR10             | rating-service          | rating_db          | PostgreSQL |
-| BC09 Operations & Reporting | FR11, FR12       | operations-service      | operations_db      | PostgreSQL |
+| BC   | FR               | Microservice            | Database           | Database Type |
+| ---- | ---------------- | ----------------------- | ------------------ | ------------- |
+| BC01 | FR01, FR13       | identity-service        | identity_db        | PostgreSQL    |
+| BC02 | FR02             | booking-service         | booking_db         | PostgreSQL    |
+| BC03 | FR03, FR04       | driver-dispatch-service | driver_dispatch_db | PostgreSQL    |
+| BC04 | FR05, FR06, FR14 | trip-service            | trip_db            | PostgreSQL    |
+| BC05 | FR07             | pricing-service         | pricing_db         | PostgreSQL    |
+| BC06 | FR08, FR14       | payment-service         | payment_db         | PostgreSQL    |
+| BC07 | FR09             | notification-service    | notification_db    | MongoDB       |
+| BC08 | FR10             | rating-service          | rating_db          | PostgreSQL    |
+| BC09 | FR11, FR12       | operations-service      | operations_db      | PostgreSQL    |
 
 ---
 
@@ -1761,51 +1732,54 @@ erDiagram
 
 ```mermaid
 flowchart TB
+    USER["Customer / Driver / Operator"]
 
-    USER[Customer / Driver / Operator]
+    USER --> GATEWAY["API Gateway"]
 
-    USER --> GATEWAY[API Gateway]
+    GATEWAY --> ID["Identity Service"]
+    GATEWAY --> BOOK["Booking Service"]
+    GATEWAY --> DIS["Driver & Dispatch Service"]
+    GATEWAY --> TRIP["Trip Service"]
+    GATEWAY --> PRICE["Pricing Service"]
+    GATEWAY --> PAY["Payment Service"]
+    GATEWAY --> NOTI["Notification Service"]
+    GATEWAY --> RATE["Rating Service"]
+    GATEWAY --> OPS["Operations Service"]
 
-    GATEWAY --> BC1[Identity Service]
-    GATEWAY --> BC2[Booking Service]
-    GATEWAY --> BC3[Driver & Dispatch Service]
-    GATEWAY --> BC4[Trip Service]
-    GATEWAY --> BC5[Pricing Service]
-    GATEWAY --> BC6[Payment Service]
-    GATEWAY --> BC7[Notification Service]
-    GATEWAY --> BC8[Rating Service]
-    GATEWAY --> BC9[Operations Service]
+    ID --> IDDB[("identity_db")]
+    BOOK --> BOOKDB[("booking_db")]
+    DIS --> DISDB[("driver_dispatch_db")]
+    TRIP --> TRIPDB[("trip_db")]
+    PRICE --> PRICEDB[("pricing_db")]
+    PAY --> PAYDB[("payment_db")]
+    NOTI --> NOTIDB[("notification_db")]
+    RATE --> RATEDB[("rating_db")]
+    OPS --> OPSDB[("operations_db")]
 
-    BC1 --> DB1[(identity_db)]
-    BC2 --> DB2[(booking_db)]
-    BC3 --> DB3[(driver_dispatch_db)]
-    BC4 --> DB4[(trip_db)]
-    BC5 --> DB5[(pricing_db)]
-    BC6 --> DB6[(payment_db)]
-    BC7 --> DB7[(notification_db)]
-    BC8 --> DB8[(rating_db)]
-    BC9 --> DB9[(operations_db)]
+    BOOK -.-> DIS
+    DIS -.-> TRIP
+    TRIP -.-> PRICE
+    PRICE -.-> PAY
 
-    BC2 -. Booking Created .-> BC3
-    BC3 -. Driver Assigned .-> BC4
-    BC4 -. Trip Completed .-> BC5
-    BC5 -. Fare Calculated .-> BC6
-    BC2 -. Notification Event .-> BC7
-    BC3 -. Notification Event .-> BC7
-    BC4 -. Notification Event .-> BC7
-    BC6 -. Payment Event .-> BC7
-    BC4 -. Trip Completed .-> BC8
-    BC2 -. Operational Event .-> BC9
-    BC3 -. Operational Event .-> BC9
-    BC4 -. Operational Event .-> BC9
-    BC6 -. Operational Event .-> BC9
+    BOOK -.-> NOTI
+    DIS -.-> NOTI
+    TRIP -.-> NOTI
+    PAY -.-> NOTI
+
+    TRIP -.-> RATE
+
+    BOOK -.-> OPS
+    DIS -.-> OPS
+    TRIP -.-> OPS
+    PAY -.-> OPS
+    RATE -.-> OPS
 ```
 
 ---
 
-# 13. QUY TẮC DATA OWNERSHIP
+# 13. DATA OWNERSHIP
 
-Mỗi Bounded Context chỉ sở hữu dữ liệu của mình.
+Mỗi Microservice sở hữu dữ liệu của chính mình.
 
 ```text
 Identity Service
@@ -1830,7 +1804,7 @@ Fare / Fare Rule
 
 Payment Service
     ↓
-Payment / Transaction
+Payment / Payment Attempt
 
 Notification Service
     ↓
@@ -1848,28 +1822,65 @@ Operational Data / Report
 Không cho phép:
 
 ```text
-Service A → truy cập trực tiếp → Database B
+Service A
+    ↓
+truy cập trực tiếp
+    ↓
+Database B
 ```
 
-Mà phải:
+Thay vào đó:
 
 ```text
 Service A
-   ↓
+    ↓
 API / Event
-   ↓
+    ↓
 Service B
-   ↓
+    ↓
 Database B
 ```
 
 ---
 
-# 14. KẾT LUẬN
+# 14. FR → BOUNDED CONTEXT → MICROSERVICE
 
-Thiết kế CabSystem được thực hiện theo DDD với 9 Bounded Context.
+| FR   | Bounded Context           | Microservice                   |
+| ---- | ------------------------- | ------------------------------ |
+| FR01 | Identity & Access         | identity-service               |
+| FR02 | Booking                   | booking-service                |
+| FR03 | Driver & Dispatch         | driver-dispatch-service        |
+| FR04 | Driver & Dispatch         | driver-dispatch-service        |
+| FR05 | Trip Management           | trip-service                   |
+| FR06 | Trip Management           | trip-service                   |
+| FR07 | Pricing & Fare            | pricing-service                |
+| FR08 | Payment                   | payment-service                |
+| FR09 | Notification              | notification-service           |
+| FR10 | Rating & Feedback         | rating-service                 |
+| FR11 | Operations & Reporting    | operations-service             |
+| FR12 | Operations & Reporting    | operations-service             |
+| FR13 | Identity & Access         | identity-service               |
+| FR14 | Trip Management + Payment | trip-service + payment-service |
 
-Đối với **từng Bounded Context**, quá trình thiết kế được thực hiện thống nhất:
+---
+
+# 15. KẾT LUẬN
+
+Thiết kế DDD của CabSystem gồm 9 Bounded Context:
+
+```text
+BC01 – Identity & Access
+BC02 – Booking
+BC03 – Driver & Dispatch
+BC04 – Trip Management
+BC05 – Pricing & Fare
+BC06 – Payment
+BC07 – Notification
+BC08 – Rating & Feedback
+BC09 – Operations & Reporting
+```
+
+Mỗi Bounded Context được thiết kế theo cùng một trình tự:
 
 ```text
 FR liên quan
@@ -1891,9 +1902,7 @@ Database
 ERD
 ```
 
-Do đó, mỗi Bounded Context vừa thể hiện được **phạm vi nghiệp vụ**, **ngôn ngữ riêng**, **thực thể**, **API**, **mô hình dữ liệu**, vừa xác định được **Database phù hợp**.
-
-Mô hình cuối cùng:
+Kiến trúc cuối cùng:
 
 ```text
 9 Bounded Context
@@ -1903,4 +1912,4 @@ Mô hình cuối cùng:
 9 Database
 ```
 
-Mỗi Microservice độc lập về dữ liệu và giao tiếp với các Microservice khác thông qua API hoặc Event/Message.
+Mỗi Microservice sở hữu dữ liệu riêng và giao tiếp với Microservice khác thông qua API hoặc Event/Message.
