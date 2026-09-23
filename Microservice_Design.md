@@ -1,759 +1,264 @@
-# THIẾT KẾ BOUNDED CONTEXT VÀ KIẾN TRÚC MICROSERVICE – CABSYSTEM
+# DDD – THIẾT KẾ BOUNDED CONTEXT VÀ MICROSERVICE CABSYSTEM
 
-> **Chuỗi thiết kế:**
-> **FR → Business Workflow → Bounded Context → Ubiquitous Language → Microservice → API → Entity Model → Database → Data Model → ERD**
+## 1. Nguyên tắc thiết kế
 
----
+Hệ thống CabSystem được phân tách thành các **Bounded Context** dựa trên Functional Requirements (FR) và Business Workflow.
 
-# X.1. PHÂN TÍCH FUNCTIONAL REQUIREMENTS VÀ BUSINESS WORKFLOW
+Mỗi Bounded Context tương ứng với một Microservice và sở hữu một Database riêng.
 
-Việc phân chia hệ thống CabSystem thành các Bounded Context được thực hiện dựa trên Functional Requirements và Business Workflow trong SRS.
-
-## X.1.1. Functional Requirements
-
-| FR   | Chức năng         | Mô tả                                                                   |
-| ---- | ----------------- | ----------------------------------------------------------------------- |
-| FR01 | Quản lý tài khoản | Đăng ký, đăng nhập và cập nhật thông tin người dùng                     |
-| FR02 | Đặt xe            | Nhập điểm đón, điểm đến và chọn loại xe để gửi yêu cầu                  |
-| FR03 | Tìm tài xế        | Xác định và ưu tiên tài xế phù hợp, gần khách hàng                      |
-| FR04 | Phân công tài xế  | Gửi yêu cầu cho tài xế và tìm tài xế khác nếu bị từ chối                |
-| FR05 | Quản lý chuyến đi | Theo dõi và cập nhật trạng thái chuyến đi                               |
-| FR06 | Theo dõi vị trí   | Lưu và cập nhật vị trí tài xế để hỗ trợ tìm xe và dự kiến thời gian đến |
-| FR07 | Tính cước         | Tính số tiền khách hàng phải trả dựa trên thông tin chuyến đi           |
-| FR08 | Thanh toán        | Hỗ trợ thanh toán tiền mặt và thanh toán điện tử                        |
-| FR09 | Thông báo         | Gửi thông báo về đặt xe, tài xế, chuyến đi và thanh toán                |
-| FR10 | Đánh giá tài xế   | Cho phép khách hàng đánh giá tài xế sau khi hoàn thành chuyến           |
-| FR11 | Quản lý vận hành  | Quản lý khách hàng, tài xế, phương tiện và chuyến đi                    |
-| FR12 | Báo cáo           | Cung cấp báo cáo về chuyến đi, doanh thu, tỷ lệ hủy và hiệu quả tài xế  |
-| FR13 | Phân quyền        | Kiểm soát quyền truy cập các chức năng quản trị                         |
-| FR14 | Quản lý lịch sử   | Tra cứu lịch sử chuyến đi và giao dịch                                  |
-
-> **Nguồn phân tích:** FR01–FR14 được lấy theo bảng phân rã yêu cầu chức năng trong SRS.
-
----
-
-# X.1.2. BUSINESS WORKFLOW
-
-Workflow tổng quát của CabSystem:
+Quy trình thiết kế cho **mỗi Bounded Context**:
 
 ```text
-Đăng nhập
+FR liên quan
     ↓
-Nhập vị trí hiện tại
+Business Workflow
     ↓
-Nhập điểm đón
+Ubiquitous Language
     ↓
-Nhập điểm đến
+Mô hình thực thể (Entity Model)
     ↓
-Chọn loại xe
+Bảng API
     ↓
-Đặt xe
+Data Model
     ↓
-Hệ thống tiếp nhận yêu cầu
+Chọn Database Type
     ↓
-Tìm tài xế phù hợp
+Database
     ↓
-Kiểm tra vị trí + trạng thái tài xế
-    ↓
-Gửi yêu cầu cho tài xế
-    ↓
-┌─────────────────────────────┐
-│ Tài xế chấp nhận?           │
-└─────────────────────────────┘
-       ↓ Có              ↓ Không
-       ↓                  ↓
-Phân công tài xế      Tìm tài xế khác
-       ↓
-Thông báo cho khách hàng
-       ↓
-Tài xế di chuyển đến điểm đón
-       ↓
-Tài xế đến
-       ↓
-Đón khách
-       ↓
-Chuyến đi đang thực hiện
-       ↓
-Hoàn thành chuyến
-       ↓
-Tính cước
-       ↓
-Thanh toán
-       ↓
-Đánh giá tài xế
-       ↓
-Lưu lịch sử
-```
-
-### Workflow tìm và phân công tài xế
-
-```text
-Booking Created
-      ↓
-Driver Search
-      ↓
-Kiểm tra Driver Status
-      ↓
-Kiểm tra Driver Location
-      ↓
-Ưu tiên Driver phù hợp và gần
-      ↓
-Gửi Dispatch Request
-      ↓
-Chờ phản hồi
-      ↓
-┌─────────────────────┐
-│ Driver Response     │
-└─────────────────────┘
-   ↓        ↓       ↓
-Accept   Reject   Timeout
-   ↓        ↓       ↓
-   └────────┴───────┘
-            ↓
-      Tìm Driver tiếp theo
-            ↓
-       Có Driver?
-       ↓          ↓
-      Có          Không
-       ↓           ↓
-Assignment     Notification
-       ↓
-Trip bắt đầu
+ERD
 ```
 
 ---
 
-# X.2. PHÂN CHIA BOUNDED CONTEXT
+# 2. BC01 – IDENTITY & ACCESS
 
-CabSystem được phân chia thành **9 Bounded Context**.
+## 2.1. FR liên quan
 
-| BC   | Bounded Context        | FR               | Phạm vi nghiệp vụ                                    |
-| ---- | ---------------------- | ---------------- | ---------------------------------------------------- |
-| BC01 | Identity & Access      | FR01, FR13       | Tài khoản, xác thực, phân quyền                      |
-| BC02 | Booking                | FR02             | Tiếp nhận và quản lý yêu cầu đặt xe                  |
-| BC03 | Driver & Dispatch      | FR03, FR04       | Quản lý tài xế, phương tiện, tìm và phân công tài xế |
-| BC04 | Trip Management        | FR05, FR06, FR14 | Quản lý chuyến, vị trí và lịch sử chuyến             |
-| BC05 | Pricing & Fare         | FR07             | Tính cước                                            |
-| BC06 | Payment                | FR08, FR14       | Thanh toán và lịch sử giao dịch                      |
-| BC07 | Notification           | FR09             | Gửi và quản lý thông báo                             |
-| BC08 | Rating & Feedback      | FR10             | Đánh giá và phản hồi                                 |
-| BC09 | Operations & Reporting | FR11, FR12       | Quản lý vận hành và báo cáo                          |
+| FR   | Chức năng         |
+| ---- | ----------------- |
+| FR01 | Quản lý tài khoản |
+| FR13 | Phân quyền        |
 
-## Nguyên tắc xử lý FR14
+### Phạm vi
 
-FR14 **không tạo thành một History Microservice riêng**.
+BC01 chịu trách nhiệm:
 
-Dữ liệu lịch sử được sở hữu bởi Context tạo ra dữ liệu:
-
-```text
-Trip History
-    ↓
-Trip Management
-
-Payment / Transaction History
-    ↓
-Payment
-
-Operational / Reporting Data
-    ↓
-Operations & Reporting
-```
-
-Cách này tránh việc tạo một Service chỉ để sao chép dữ liệu từ nhiều Context khác.
+* Đăng ký tài khoản.
+* Đăng nhập.
+* Cập nhật thông tin tài khoản.
+* Xác thực người dùng.
+* Quản lý Role.
+* Quản lý Permission.
+* Kiểm soát quyền truy cập.
 
 ---
 
-# X.3. UBIQUITOUS LANGUAGE
+## 2.2. Business Workflow
 
-## X.3.1. Identity & Access
+```mermaid
+flowchart TD
+    A[Người dùng] --> B[Đăng ký tài khoản]
+    B --> C[Tạo Account]
+    C --> D[Đăng nhập]
+    D --> E[Xác thực tài khoản]
+    E --> F[Kiểm tra Role và Permission]
+    F --> G[Cho phép truy cập chức năng]
+    G --> H[Cập nhật thông tin tài khoản]
+```
 
-| Thuật ngữ      | Ý nghĩa                        |
+---
+
+## 2.3. Ubiquitous Language
+
+| Thuật ngữ      | Định nghĩa                     |
 | -------------- | ------------------------------ |
-| Account        | Tài khoản người dùng           |
-| Authentication | Xác thực người dùng            |
-| Authorization  | Kiểm tra quyền truy cập        |
-| Role           | Vai trò                        |
-| Permission     | Quyền thực hiện chức năng      |
-| Access Token   | Thông tin xác thực khi gọi API |
-| Audit Log      | Nhật ký thao tác               |
+| Account        | Tài khoản của người dùng       |
+| Authentication | Xác thực danh tính người dùng  |
+| Authorization  | Kiểm soát quyền truy cập       |
+| Role           | Vai trò của tài khoản          |
+| Permission     | Quyền thực hiện một chức năng  |
+| Audit Log      | Nhật ký thao tác của tài khoản |
 
 ---
 
-## X.3.2. Booking
+## 2.4. Mô hình thực thể
 
-| Thuật ngữ       | Ý nghĩa            |
-| --------------- | ------------------ |
-| Booking         | Yêu cầu đặt xe     |
-| Pickup Location | Điểm đón           |
-| Destination     | Điểm đến           |
-| Vehicle Type    | Loại xe            |
-| Booking Status  | Trạng thái đặt xe  |
-| Cancel Booking  | Hủy yêu cầu đặt xe |
+```mermaid
+classDiagram
 
----
+    class Account {
+        +UUID accountId
+        +String email
+        +String phone
+        +String passwordHash
+        +String status
+        +DateTime createdAt
+        +DateTime updatedAt
+    }
 
-## X.3.3. Driver & Dispatch
+    class Role {
+        +UUID roleId
+        +String roleName
+    }
 
-| Thuật ngữ         | Ý nghĩa                         |
-| ----------------- | ------------------------------- |
-| Driver            | Tài xế                          |
-| Vehicle           | Phương tiện                     |
-| Driver Status     | Trạng thái hoạt động của tài xế |
-| Available Driver  | Tài xế sẵn sàng nhận chuyến     |
-| Driver Location   | Vị trí tài xế                   |
-| Dispatch Request  | Yêu cầu gửi chuyến cho tài xế   |
-| Driver Acceptance | Tài xế chấp nhận                |
-| Driver Rejection  | Tài xế từ chối                  |
-| Assignment        | Kết quả phân công               |
+    class Permission {
+        +UUID permissionId
+        +String actionCode
+        +String description
+    }
 
----
+    class AuditLog {
+        +UUID logId
+        +UUID accountId
+        +String action
+        +String description
+        +String ipAddress
+        +DateTime createdAt
+    }
 
-## X.3.4. Trip Management
-
-| Thuật ngữ      | Ý nghĩa                |
-| -------------- | ---------------------- |
-| Trip           | Chuyến xe              |
-| Trip Status    | Trạng thái chuyến      |
-| Driver Arrived | Tài xế đã đến điểm đón |
-| Picked Up      | Đã đón khách           |
-| In Progress    | Đang thực hiện chuyến  |
-| Completed      | Hoàn thành             |
-| Cancelled      | Đã hủy                 |
-| Trip Location  | Vị trí chuyến          |
-| Trip History   | Lịch sử chuyến         |
-
----
-
-## X.3.5. Pricing & Fare
-
-| Thuật ngữ     | Ý nghĩa               |
-| ------------- | --------------------- |
-| Fare          | Cước chuyến xe        |
-| Fare Rule     | Quy tắc tính cước     |
-| Base Fare     | Giá cơ bản            |
-| Distance      | Quãng đường           |
-| Distance Fare | Cước theo quãng đường |
-| Total Amount  | Tổng tiền             |
-
----
-
-## X.3.6. Payment
-
-| Thuật ngữ          | Ý nghĩa                  |
-| ------------------ | ------------------------ |
-| Payment            | Thanh toán               |
-| Payment Method     | Phương thức thanh toán   |
-| Cash Payment       | Thanh toán tiền mặt      |
-| Electronic Payment | Thanh toán điện tử       |
-| Transaction        | Giao dịch                |
-| Payment Status     | Trạng thái thanh toán    |
-| Payment Attempt    | Một lần thử thanh toán   |
-| Payment Retry      | Thực hiện lại thanh toán |
-
----
-
-## X.3.7. Notification
-
-| Thuật ngữ         | Ý nghĩa           |
-| ----------------- | ----------------- |
-| Notification      | Thông báo         |
-| Notification Type | Loại thông báo    |
-| Recipient         | Người nhận        |
-| Channel           | Kênh gửi          |
-| Delivery Status   | Trạng thái gửi    |
-| Read Status       | Trạng thái đã đọc |
-
----
-
-## X.3.8. Rating & Feedback
-
-| Thuật ngữ    | Ý nghĩa              |
-| ------------ | -------------------- |
-| Rating       | Đánh giá             |
-| Feedback     | Phản hồi             |
-| Rating Score | Điểm đánh giá        |
-| Comment      | Nhận xét             |
-| Rated Driver | Tài xế được đánh giá |
-
----
-
-## X.3.9. Operations & Reporting
-
-| Thuật ngữ          | Ý nghĩa                  |
-| ------------------ | ------------------------ |
-| Operation          | Hoạt động vận hành       |
-| Operational View   | Dữ liệu phục vụ vận hành |
-| Report             | Báo cáo                  |
-| Statistic          | Thống kê                 |
-| Revenue Report     | Báo cáo doanh thu        |
-| Trip Report        | Báo cáo chuyến           |
-| Cancellation Rate  | Tỷ lệ hủy                |
-| Driver Performance | Hiệu quả tài xế          |
-
----
-
-# X.4. MAPPING BOUNDED CONTEXT → MICROSERVICE → DATABASE
-
-| BC   | Bounded Context        | Microservice              | Database             | Database Type |
-| ---- | ---------------------- | ------------------------- | -------------------- | ------------- |
-| BC01 | Identity & Access      | `identity-service`        | `identity_db`        | PostgreSQL    |
-| BC02 | Booking                | `booking-service`         | `booking_db`         | PostgreSQL    |
-| BC03 | Driver & Dispatch      | `driver-dispatch-service` | `driver_dispatch_db` | PostgreSQL    |
-| BC04 | Trip Management        | `trip-service`            | `trip_db`            | PostgreSQL    |
-| BC05 | Pricing & Fare         | `pricing-service`         | `pricing_db`         | PostgreSQL    |
-| BC06 | Payment                | `payment-service`         | `payment_db`         | PostgreSQL    |
-| BC07 | Notification           | `notification-service`    | `notification_db`    | MongoDB       |
-| BC08 | Rating & Feedback      | `rating-service`          | `rating_db`          | PostgreSQL    |
-| BC09 | Operations & Reporting | `operations-service`      | `operations_db`      | PostgreSQL    |
-
-## Nguyên tắc Database per Service
-
-```text
-1 Bounded Context
-        ↓
-1 Microservice
-        ↓
-1 Database
+    Account "*" -- "*" Role
+    Role "*" -- "*" Permission
+    Account "1" -- "*" AuditLog
 ```
 
-Không Microservice nào được truy cập trực tiếp Database của Microservice khác.
+---
 
-Ví dụ:
+## 2.5. Bảng API
+
+| API nghiệp vụ    | Entity     | Chức năng          |
+| ---------------- | ---------- | ------------------ |
+| Register Account | Account    | Tạo tài khoản      |
+| Login            | Account    | Xác thực tài khoản |
+| Update Account   | Account    | Cập nhật thông tin |
+| Get Account      | Account    | Xem thông tin      |
+| Assign Role      | Role       | Gán vai trò        |
+| Check Permission | Permission | Kiểm tra quyền     |
+| Create Audit Log | AuditLog   | Lưu nhật ký        |
+
+> Tên HTTP Method và Endpoint phải lấy đúng từ `API Document/` của repository.
+
+---
+
+## 2.6. Data Model
+
+### ACCOUNT
+
+| Field         | Type      | Key |
+| ------------- | --------- | --- |
+| account_id    | UUID      | PK  |
+| email         | VARCHAR   |     |
+| phone         | VARCHAR   |     |
+| password_hash | VARCHAR   |     |
+| status        | VARCHAR   |     |
+| created_at    | TIMESTAMP |     |
+| updated_at    | TIMESTAMP |     |
+
+### ROLE
+
+| Field     | Type    | Key |
+| --------- | ------- | --- |
+| role_id   | UUID    | PK  |
+| role_name | VARCHAR |     |
+
+### PERMISSION
+
+| Field         | Type    | Key |
+| ------------- | ------- | --- |
+| permission_id | UUID    | PK  |
+| action_code   | VARCHAR |     |
+| description   | TEXT    |     |
+
+### ACCOUNT_ROLE
+
+| Field      | Type | Key    |
+| ---------- | ---- | ------ |
+| account_id | UUID | PK, FK |
+| role_id    | UUID | PK, FK |
+
+### ROLE_PERMISSION
+
+| Field         | Type | Key    |
+| ------------- | ---- | ------ |
+| role_id       | UUID | PK, FK |
+| permission_id | UUID | PK, FK |
+
+### AUDIT_LOG
+
+| Field       | Type      | Key          |
+| ----------- | --------- | ------------ |
+| log_id      | UUID      | PK           |
+| account_id  | UUID      | Reference ID |
+| action      | VARCHAR   |              |
+| description | TEXT      |              |
+| ip_address  | VARCHAR   |              |
+| created_at  | TIMESTAMP |              |
+
+---
+
+## 2.7. Chọn Database Type
+
+**PostgreSQL**
+
+Lý do:
+
+* Account, Role và Permission có quan hệ rõ ràng.
+* Cần Transaction.
+* Cần đảm bảo tính nhất quán dữ liệu.
+* Có nhiều quan hệ Many-to-Many.
+
+---
+
+## 2.8. Database
 
 ```text
-booking-service
-      X
-      X──────> identity_db
-      X
-
-booking-service
-      │
-      │ REST API / Event
-      ↓
+Microservice:
 identity-service
-      │
-      ↓
+
+Database:
 identity_db
+
+Database Type:
+PostgreSQL
+
+Tables:
+- account
+- role
+- permission
+- account_role
+- role_permission
+- audit_log
 ```
 
----
-
-# X.5. API MAPPING
-
-API cụ thể phải sử dụng **đúng tên endpoint trong thư mục `API Document/` của repository**.
-
-Không tự tạo endpoint khác với API Document.
-
-Việc ánh xạ nghiệp vụ với Entity được xác định như sau:
-
-| BC   | API nghiệp vụ                            | Entity chính                      |
-| ---- | ---------------------------------------- | --------------------------------- |
-| BC01 | Đăng ký / Đăng nhập / Cập nhật tài khoản | Account                           |
-| BC01 | Phân quyền / Kiểm tra quyền              | Role, Permission                  |
-| BC02 | Tạo yêu cầu đặt xe                       | Booking                           |
-| BC02 | Xem / Hủy yêu cầu đặt xe                 | Booking                           |
-| BC03 | Tìm tài xế phù hợp                       | Driver                            |
-| BC03 | Gửi yêu cầu nhận chuyến                  | DispatchRequest                   |
-| BC03 | Chấp nhận / Từ chối chuyến               | DispatchRequest                   |
-| BC03 | Phân công tài xế                         | DriverAssignment                  |
-| BC04 | Tạo / cập nhật chuyến                    | Trip                              |
-| BC04 | Cập nhật trạng thái chuyến               | Trip                              |
-| BC04 | Theo dõi vị trí                          | TripLocation                      |
-| BC04 | Xem lịch sử chuyến                       | Trip                              |
-| BC05 | Tính cước                                | Fare, FareRule                    |
-| BC06 | Thanh toán                               | Payment                           |
-| BC06 | Xử lý thanh toán thất bại / thử lại      | PaymentAttempt                    |
-| BC06 | Xem lịch sử giao dịch                    | Payment                           |
-| BC07 | Gửi thông báo                            | Notification                      |
-| BC07 | Theo dõi trạng thái thông báo            | Notification                      |
-| BC08 | Đánh giá tài xế                          | Rating                            |
-| BC09 | Quản lý vận hành                         | Driver, Vehicle, Operational View |
-| BC09 | Xem báo cáo                              | Report, ReportStatistic           |
-
----
-
-# X.6. ENTITY MODEL
-
-## X.6.1. Identity Service
-
-### Account
-
-```text
-account_id
-email
-phone
-password_hash
-status
-created_at
-updated_at
-```
-
-### Role
-
-```text
-role_id
-role_name
-```
-
-### Permission
-
-```text
-permission_id
-action_code
-description
-```
-
-### AccountRole
-
-```text
-account_id
-role_id
-```
-
-### RolePermission
-
-```text
-role_id
-permission_id
-```
-
-### AuditLog
-
-```text
-log_id
-account_id
-action
-description
-ip_address
-created_at
-```
-
----
-
-## X.6.2. Booking Service
-
-### Booking
-
-```text
-booking_id
-customer_id
-pickup_location
-destination
-vehicle_type
-booking_time
-status
-created_at
-cancelled_at
-```
-
-`customer_id` là Reference ID đến Identity/Account domain.
-
----
-
-## X.6.3. Driver & Dispatch Service
-
-### Driver
-
-```text
-driver_id
-account_id
-status
-current_location
-availability
-created_at
-```
-
-### Vehicle
-
-```text
-vehicle_id
-driver_id
-vehicle_type
-license_plate
-status
-```
-
-### DispatchRequest
-
-```text
-dispatch_request_id
-booking_id
-driver_id
-sent_at
-response_deadline
-status
-```
-
-### DriverAssignment
-
-```text
-assignment_id
-booking_id
-driver_id
-assigned_at
-status
-```
-
----
-
-## X.6.4. Trip Service
-
-### Trip
-
-```text
-trip_id
-booking_id
-customer_id
-driver_id
-vehicle_id
-pickup_location
-destination
-distance
-start_time
-end_time
-status
-```
-
-### TripLocation
-
-```text
-location_id
-trip_id
-latitude
-longitude
-recorded_at
-```
-
-### TripStatusHistory
-
-```text
-status_history_id
-trip_id
-status
-changed_at
-```
-
----
-
-## X.6.5. Pricing Service
-
-### FareRule
-
-```text
-fare_rule_id
-vehicle_type
-base_price
-price_per_km
-status
-effective_from
-effective_to
-```
-
-### Fare
-
-```text
-fare_id
-fare_rule_id
-trip_id
-vehicle_type
-distance
-base_fare
-distance_fare
-total_amount
-calculated_at
-```
-
----
-
-## X.6.6. Payment Service
-
-### Payment
-
-```text
-payment_id
-trip_id
-amount
-payment_method
-payment_status
-payment_time
-transaction_code
-```
-
-### PaymentAttempt
-
-```text
-attempt_id
-payment_id
-attempt_time
-status
-response_code
-failure_reason
-```
-
----
-
-## X.6.7. Notification Service
-
-### Notification
-
-```text
-notification_id
-user_id
-title
-content
-notification_type
-channel
-delivery_status
-read_status
-sent_at
-read_at
-created_at
-```
-
----
-
-## X.6.8. Rating Service
-
-### Rating
-
-```text
-rating_id
-trip_id
-customer_id
-driver_id
-rating_score
-comment
-created_at
-```
-
-Quy tắc nghiệp vụ:
-
-```text
-Một Trip chỉ được tạo một Rating của Customer cho Driver.
-```
-
----
-
-## X.6.9. Operations & Reporting Service
-
-Operations Service không sở hữu lại dữ liệu gốc của các Service khác.
-
-Các dữ liệu phục vụ vận hành và báo cáo là **Operational Read Model / Projection**.
-
-### CustomerView
-
-```text
-customer_id
-account_id
-customer_name
-phone
-status
-```
-
-### DriverView
-
-```text
-driver_id
-driver_name
-status
-availability
-```
-
-### VehicleView
-
-```text
-vehicle_id
-driver_id
-vehicle_type
-license_plate
-status
-```
-
-### OperationalTripView
-
-```text
-trip_id
-customer_id
-driver_id
-vehicle_id
-status
-start_time
-end_time
-```
-
-### Report
-
-```text
-report_id
-report_type
-from_date
-to_date
-generated_at
-generated_by
-```
-
-### ReportStatistic
-
-```text
-statistic_id
-report_id
-metric_name
-metric_value
-```
-
----
-
-# X.7. LỰA CHỌN DATABASE TYPE
-
-| Microservice      | Database   | Lý do                                                              |
-| ----------------- | ---------- | ------------------------------------------------------------------ |
-| Identity          | PostgreSQL | Account, Role, Permission có quan hệ rõ ràng và cần tính nhất quán |
-| Booking           | PostgreSQL | Booking có cấu trúc rõ ràng và cần quản lý trạng thái              |
-| Driver & Dispatch | PostgreSQL | Driver, Vehicle, Dispatch và Assignment có quan hệ nghiệp vụ       |
-| Trip              | PostgreSQL | Trip, TripLocation và StatusHistory có quan hệ 1-N                 |
-| Pricing           | PostgreSQL | Fare và FareRule cần tính toán chính xác                           |
-| Payment           | PostgreSQL | Dữ liệu giao dịch cần tính nhất quán cao                           |
-| Notification      | MongoDB    | Nội dung và metadata thông báo có thể thay đổi                     |
-| Rating            | PostgreSQL | Rating có cấu trúc rõ ràng và cần đảm bảo tính nhất quán           |
-| Operations        | PostgreSQL | Báo cáo và thống kê cần truy vấn tổng hợp                          |
-
-> Database Type là quyết định thiết kế của kiến trúc Microservice, không phải công nghệ được SRS bắt buộc.
-
----
-
-# X.8. MÔ HÌNH DỮ LIỆU VÀ ERD
-
-## X.8.1. Identity Database
+### ERD
 
 ```mermaid
 erDiagram
 
     ACCOUNT ||--o{ ACCOUNT_ROLE : has
-    ROLE ||--o{ ACCOUNT_ROLE : assigned_to
-
+    ROLE ||--o{ ACCOUNT_ROLE : assigned
     ROLE ||--o{ ROLE_PERMISSION : has
     PERMISSION ||--o{ ROLE_PERMISSION : contains
-
-    ACCOUNT ||--o{ AUDIT_LOG : generates
+    ACCOUNT ||--o{ AUDIT_LOG : creates
 
     ACCOUNT {
         uuid account_id PK
-        string email
-        string phone
-        string password_hash
-        string status
-        datetime created_at
+        varchar email
+        varchar phone
+        varchar password_hash
+        varchar status
+        timestamp created_at
+        timestamp updated_at
     }
 
     ROLE {
         uuid role_id PK
-        string role_name
+        varchar role_name
     }
 
     PERMISSION {
         uuid permission_id PK
-        string action_code
-        string description
+        varchar action_code
+        text description
     }
 
     ACCOUNT_ROLE {
@@ -769,16 +274,135 @@ erDiagram
     AUDIT_LOG {
         uuid log_id PK
         uuid account_id
-        string action
-        string description
-        string ip_address
-        datetime created_at
+        varchar action
+        text description
+        timestamp created_at
     }
 ```
 
 ---
 
-## X.8.2. Booking Database
+# 3. BC02 – BOOKING
+
+## 3.1. FR liên quan
+
+| FR   | Chức năng |
+| ---- | --------- |
+| FR02 | Đặt xe    |
+
+### Phạm vi
+
+BC02 chịu trách nhiệm tiếp nhận và quản lý yêu cầu đặt xe của khách hàng.
+
+---
+
+## 3.2. Business Workflow
+
+```mermaid
+flowchart TD
+    A[Khách hàng] --> B[Nhập vị trí hiện tại]
+    B --> C[Nhập điểm đón]
+    C --> D[Nhập điểm đến]
+    D --> E[Chọn loại xe]
+    E --> F[Gửi yêu cầu]
+    F --> G[Tạo Booking]
+    G --> H[Booking được ghi nhận]
+    H --> I[Gửi yêu cầu tìm tài xế]
+```
+
+---
+
+## 3.3. Ubiquitous Language
+
+| Thuật ngữ       | Định nghĩa             |
+| --------------- | ---------------------- |
+| Booking         | Yêu cầu đặt xe         |
+| Pickup Location | Điểm đón khách         |
+| Destination     | Điểm đến               |
+| Vehicle Type    | Loại phương tiện       |
+| Booking Status  | Trạng thái của Booking |
+| Cancel Booking  | Hủy yêu cầu đặt xe     |
+
+---
+
+## 3.4. Mô hình thực thể
+
+```mermaid
+classDiagram
+
+    class Booking {
+        +UUID bookingId
+        +UUID customerId
+        +String pickupLocation
+        +String destination
+        +String vehicleType
+        +DateTime bookingTime
+        +String status
+        +DateTime createdAt
+        +DateTime cancelledAt
+    }
+```
+
+---
+
+## 3.5. Bảng API
+
+| API nghiệp vụ  | Entity  | Chức năng                        |
+| -------------- | ------- | -------------------------------- |
+| Create Booking | Booking | Tạo yêu cầu đặt xe               |
+| Get Booking    | Booking | Xem thông tin Booking            |
+| Cancel Booking | Booking | Hủy Booking                      |
+| Update Booking | Booking | Cập nhật thông tin nếu được phép |
+
+---
+
+## 3.6. Data Model
+
+### BOOKING
+
+| Field           | Type      | Key          |
+| --------------- | --------- | ------------ |
+| booking_id      | UUID      | PK           |
+| customer_id     | UUID      | Reference ID |
+| pickup_location | VARCHAR   |              |
+| destination     | VARCHAR   |              |
+| vehicle_type    | VARCHAR   |              |
+| booking_time    | TIMESTAMP |              |
+| status          | VARCHAR   |              |
+| created_at      | TIMESTAMP |              |
+| cancelled_at    | TIMESTAMP |              |
+
+---
+
+## 3.7. Chọn Database Type
+
+**PostgreSQL**
+
+Lý do:
+
+* Booking có cấu trúc dữ liệu rõ ràng.
+* Trạng thái Booking cần nhất quán.
+* Cần Transaction khi tạo hoặc hủy Booking.
+
+---
+
+## 3.8. Database
+
+```text
+Microservice:
+booking-service
+
+Database:
+booking_db
+
+Database Type:
+PostgreSQL
+
+Table:
+- booking
+```
+
+### ERD
 
 ```mermaid
 erDiagram
@@ -786,21 +410,203 @@ erDiagram
     BOOKING {
         uuid booking_id PK
         uuid customer_id
-        string pickup_location
-        string destination
-        string vehicle_type
-        datetime booking_time
-        string status
-        datetime created_at
-        datetime cancelled_at
+        varchar pickup_location
+        varchar destination
+        varchar vehicle_type
+        timestamp booking_time
+        varchar status
+        timestamp created_at
+        timestamp cancelled_at
     }
 ```
 
-`customer_id` là Reference ID, không phải Foreign Key đến Database khác.
+`customer_id` là Reference ID đến Identity/Operations Context, không tạo Foreign Key xuyên Database.
 
 ---
 
-## X.8.3. Driver & Dispatch Database
+# 4. BC03 – DRIVER & DISPATCH
+
+## 4.1. FR liên quan
+
+| FR   | Chức năng        |
+| ---- | ---------------- |
+| FR03 | Tìm tài xế       |
+| FR04 | Phân công tài xế |
+
+---
+
+## 4.2. Business Workflow
+
+```mermaid
+flowchart TD
+    A[Nhận Booking] --> B[Tìm tài xế phù hợp]
+    B --> C[Kiểm tra vị trí]
+    C --> D[Kiểm tra trạng thái sẵn sàng]
+    D --> E{Có tài xế phù hợp?}
+
+    E -- Không --> F[Thông báo không tìm thấy]
+    E -- Có --> G[Gửi yêu cầu cho tài xế]
+
+    G --> H{Tài xế phản hồi?}
+    H -- Từ chối --> B
+    H -- Không phản hồi --> B
+    H -- Chấp nhận --> I[Phân công tài xế]
+    I --> J[Thông báo khách hàng]
+```
+
+---
+
+## 4.3. Ubiquitous Language
+
+| Thuật ngữ        | Định nghĩa                  |
+| ---------------- | --------------------------- |
+| Driver           | Tài xế                      |
+| Driver Status    | Trạng thái hoạt động        |
+| Available Driver | Tài xế sẵn sàng nhận chuyến |
+| Driver Location  | Vị trí tài xế               |
+| Dispatch Request | Yêu cầu gửi chuyến          |
+| Assignment       | Kết quả phân công           |
+| Accept           | Tài xế chấp nhận            |
+| Reject           | Tài xế từ chối              |
+
+---
+
+## 4.4. Mô hình thực thể
+
+```mermaid
+classDiagram
+
+    class Driver {
+        +UUID driverId
+        +UUID accountId
+        +String status
+        +String currentLocation
+        +Boolean availability
+    }
+
+    class Vehicle {
+        +UUID vehicleId
+        +UUID driverId
+        +String vehicleType
+        +String licensePlate
+        +String status
+    }
+
+    class DispatchRequest {
+        +UUID dispatchRequestId
+        +UUID bookingId
+        +UUID driverId
+        +DateTime sentAt
+        +DateTime responseDeadline
+        +String status
+    }
+
+    class DriverAssignment {
+        +UUID assignmentId
+        +UUID bookingId
+        +UUID driverId
+        +DateTime assignedAt
+        +String status
+    }
+
+    Driver "1" -- "*" Vehicle
+    Driver "1" -- "*" DispatchRequest
+    Driver "1" -- "*" DriverAssignment
+```
+
+---
+
+## 4.5. Bảng API
+
+| API nghiệp vụ           | Entity           | Chức năng   |
+| ----------------------- | ---------------- | ----------- |
+| Search Available Driver | Driver           | Tìm tài xế  |
+| Get Driver Location     | Driver           | Lấy vị trí  |
+| Send Dispatch Request   | DispatchRequest  | Gửi yêu cầu |
+| Accept Request          | DispatchRequest  | Chấp nhận   |
+| Reject Request          | DispatchRequest  | Từ chối     |
+| Assign Driver           | DriverAssignment | Phân công   |
+
+---
+
+## 4.6. Data Model
+
+### DRIVER
+
+| Field            | Type      | Key          |
+| ---------------- | --------- | ------------ |
+| driver_id        | UUID      | PK           |
+| account_id       | UUID      | Reference ID |
+| status           | VARCHAR   |              |
+| current_location | VARCHAR   |              |
+| availability     | BOOLEAN   |              |
+| created_at       | TIMESTAMP |              |
+
+### VEHICLE
+
+| Field         | Type    | Key |
+| ------------- | ------- | --- |
+| vehicle_id    | UUID    | PK  |
+| driver_id     | UUID    | FK  |
+| vehicle_type  | VARCHAR |     |
+| license_plate | VARCHAR |     |
+| status        | VARCHAR |     |
+
+### DISPATCH_REQUEST
+
+| Field               | Type      | Key          |
+| ------------------- | --------- | ------------ |
+| dispatch_request_id | UUID      | PK           |
+| booking_id          | UUID      | Reference ID |
+| driver_id           | UUID      | FK           |
+| sent_at             | TIMESTAMP |              |
+| response_deadline   | TIMESTAMP |              |
+| status              | VARCHAR   |              |
+
+### DRIVER_ASSIGNMENT
+
+| Field         | Type      | Key          |
+| ------------- | --------- | ------------ |
+| assignment_id | UUID      | PK           |
+| booking_id    | UUID      | Reference ID |
+| driver_id     | UUID      | FK           |
+| assigned_at   | TIMESTAMP |              |
+| status        | VARCHAR   |              |
+
+---
+
+## 4.7. Chọn Database Type
+
+**PostgreSQL**
+
+Lý do:
+
+* Driver, Vehicle và Assignment có quan hệ.
+* Cần đảm bảo trạng thái phân công nhất quán.
+* Dispatch Request cần lưu lịch sử xử lý.
+
+---
+
+## 4.8. Database
+
+```text
+Microservice:
+driver-dispatch-service
+
+Database:
+driver_dispatch_db
+
+Database Type:
+PostgreSQL
+
+Tables:
+- driver
+- vehicle
+- dispatch_request
+- driver_assignment
+```
+
+### ERD
 
 ```mermaid
 erDiagram
@@ -812,56 +618,210 @@ erDiagram
     DRIVER {
         uuid driver_id PK
         uuid account_id
-        string status
-        string current_location
+        varchar status
+        varchar current_location
         boolean availability
-        datetime created_at
     }
 
     VEHICLE {
         uuid vehicle_id PK
         uuid driver_id FK
-        string vehicle_type
-        string license_plate
-        string status
+        varchar vehicle_type
+        varchar license_plate
+        varchar status
     }
 
     DISPATCH_REQUEST {
         uuid dispatch_request_id PK
         uuid booking_id
-        uuid driver_id
-        datetime sent_at
-        datetime response_deadline
-        string status
+        uuid driver_id FK
+        timestamp sent_at
+        timestamp response_deadline
+        varchar status
     }
 
     DRIVER_ASSIGNMENT {
         uuid assignment_id PK
         uuid booking_id
-        uuid driver_id
-        datetime assigned_at
-        string status
+        uuid driver_id FK
+        timestamp assigned_at
+        varchar status
     }
 ```
 
-Trong Context này:
+---
 
-```text
-Driver 1 ─── N Vehicle
-Driver 1 ─── N DispatchRequest
-Driver 1 ─── N DriverAssignment
-```
+# 5. BC04 – TRIP MANAGEMENT
 
-`booking_id` là Reference ID đến Booking Service.
+## 5.1. FR liên quan
+
+| FR   | Chức năng         |
+| ---- | ----------------- |
+| FR05 | Quản lý chuyến đi |
+| FR06 | Theo dõi vị trí   |
+| FR14 | Lịch sử chuyến đi |
 
 ---
 
-## X.8.4. Trip Database
+## 5.2. Business Workflow
+
+```mermaid
+flowchart TD
+    A[Tài xế chấp nhận] --> B[Tạo Trip]
+    B --> C[Theo dõi vị trí]
+    C --> D[Tài xế đến điểm đón]
+    D --> E[Đón khách]
+    E --> F[Trip In Progress]
+    F --> G[Đến điểm đến]
+    G --> H[Trip Completed]
+    H --> I[Lưu lịch sử chuyến]
+```
+
+---
+
+## 5.3. Ubiquitous Language
+
+| Thuật ngữ     | Định nghĩa          |
+| ------------- | ------------------- |
+| Trip          | Chuyến xe           |
+| Trip Status   | Trạng thái chuyến   |
+| Trip Location | Vị trí trong chuyến |
+| Picked Up     | Đã đón khách        |
+| In Progress   | Đang thực hiện      |
+| Completed     | Đã hoàn thành       |
+| Trip History  | Lịch sử chuyến      |
+
+---
+
+## 5.4. Mô hình thực thể
+
+```mermaid
+classDiagram
+
+    class Trip {
+        +UUID tripId
+        +UUID bookingId
+        +UUID customerId
+        +UUID driverId
+        +UUID vehicleId
+        +String pickupLocation
+        +String destination
+        +Decimal distance
+        +DateTime startTime
+        +DateTime endTime
+        +String status
+    }
+
+    class TripLocation {
+        +UUID locationId
+        +UUID tripId
+        +Decimal latitude
+        +Decimal longitude
+        +DateTime recordedAt
+    }
+
+    class TripStatusHistory {
+        +UUID statusHistoryId
+        +UUID tripId
+        +String status
+        +DateTime changedAt
+    }
+
+    Trip "1" -- "*" TripLocation
+    Trip "1" -- "*" TripStatusHistory
+```
+
+---
+
+## 5.5. Bảng API
+
+| API nghiệp vụ          | Entity            | Chức năng           |
+| ---------------------- | ----------------- | ------------------- |
+| Create Trip            | Trip              | Tạo chuyến          |
+| Get Trip               | Trip              | Xem chuyến          |
+| Update Trip Status     | Trip              | Cập nhật trạng thái |
+| Update Driver Location | TripLocation      | Cập nhật vị trí     |
+| Get Trip Location      | TripLocation      | Xem vị trí          |
+| Get Trip History       | TripStatusHistory | Xem lịch sử         |
+
+---
+
+## 5.6. Data Model
+
+### TRIP
+
+| Field           | Type      | Key          |
+| --------------- | --------- | ------------ |
+| trip_id         | UUID      | PK           |
+| booking_id      | UUID      | Reference ID |
+| customer_id     | UUID      | Reference ID |
+| driver_id       | UUID      | Reference ID |
+| vehicle_id      | UUID      | Reference ID |
+| pickup_location | VARCHAR   |              |
+| destination     | VARCHAR   |              |
+| distance        | DECIMAL   |              |
+| start_time      | TIMESTAMP |              |
+| end_time        | TIMESTAMP |              |
+| status          | VARCHAR   |              |
+
+### TRIP_LOCATION
+
+| Field       | Type      | Key |
+| ----------- | --------- | --- |
+| location_id | UUID      | PK  |
+| trip_id     | UUID      | FK  |
+| latitude    | DECIMAL   |     |
+| longitude   | DECIMAL   |     |
+| recorded_at | TIMESTAMP |     |
+
+### TRIP_STATUS_HISTORY
+
+| Field             | Type      | Key |
+| ----------------- | --------- | --- |
+| status_history_id | UUID      | PK  |
+| trip_id           | UUID      | FK  |
+| status            | VARCHAR   |     |
+| changed_at        | TIMESTAMP |     |
+
+---
+
+## 5.7. Chọn Database Type
+
+**PostgreSQL**
+
+Lý do:
+
+* Trip có cấu trúc rõ ràng.
+* Cần Transaction.
+* Trip Status History cần đảm bảo tính nhất quán.
+* Có quan hệ giữa Trip và Location/History.
+
+---
+
+## 5.8. Database
+
+```text
+Microservice:
+trip-service
+
+Database:
+trip_db
+
+Database Type:
+PostgreSQL
+
+Tables:
+- trip
+- trip_location
+- trip_status_history
+```
+
+### ERD
 
 ```mermaid
 erDiagram
 
-    TRIP ||--o{ TRIP_LOCATION : tracks
+    TRIP ||--o{ TRIP_LOCATION : has
     TRIP ||--o{ TRIP_STATUS_HISTORY : records
 
     TRIP {
@@ -870,12 +830,12 @@ erDiagram
         uuid customer_id
         uuid driver_id
         uuid vehicle_id
-        string pickup_location
-        string destination
+        varchar pickup_location
+        varchar destination
         decimal distance
-        datetime start_time
-        datetime end_time
-        string status
+        timestamp start_time
+        timestamp end_time
+        varchar status
     }
 
     TRIP_LOCATION {
@@ -883,40 +843,170 @@ erDiagram
         uuid trip_id FK
         decimal latitude
         decimal longitude
-        datetime recorded_at
+        timestamp recorded_at
     }
 
     TRIP_STATUS_HISTORY {
         uuid status_history_id PK
         uuid trip_id FK
-        string status
-        datetime changed_at
+        varchar status
+        timestamp changed_at
     }
-```
-
-Quan hệ:
-
-```text
-TRIP
- ├── 1 : N → TRIP_LOCATION
- └── 1 : N → TRIP_STATUS_HISTORY
 ```
 
 ---
 
-## X.8.5. Pricing Database
+# 6. BC05 – PRICING & FARE
+
+## 6.1. FR liên quan
+
+| FR   | Chức năng |
+| ---- | --------- |
+| FR07 | Tính cước |
+
+---
+
+## 6.2. Business Workflow
+
+```mermaid
+flowchart TD
+    A[Trip hoàn thành] --> B[Lấy khoảng cách]
+    B --> C[Xác định loại xe]
+    C --> D[Lấy Fare Rule]
+    D --> E[Tính giá cơ bản]
+    E --> F[Tính giá theo khoảng cách]
+    F --> G[Tính tổng tiền]
+    G --> H[Lưu Fare]
+    H --> I[Gửi kết quả thanh toán]
+```
+
+---
+
+## 6.3. Ubiquitous Language
+
+| Thuật ngữ    | Định nghĩa        |
+| ------------ | ----------------- |
+| Fare         | Tiền cước         |
+| Fare Rule    | Quy tắc tính cước |
+| Base Fare    | Giá cơ bản        |
+| Price per Km | Giá trên mỗi km   |
+| Distance     | Quãng đường       |
+| Total Amount | Tổng tiền         |
+
+---
+
+## 6.4. Mô hình thực thể
+
+```mermaid
+classDiagram
+
+    class FareRule {
+        +UUID fareRuleId
+        +String vehicleType
+        +Decimal basePrice
+        +Decimal pricePerKm
+        +String status
+        +Date effectiveFrom
+        +Date effectiveTo
+    }
+
+    class Fare {
+        +UUID fareId
+        +UUID fareRuleId
+        +UUID tripId
+        +Decimal distance
+        +Decimal baseFare
+        +Decimal distanceFare
+        +Decimal totalAmount
+        +DateTime calculatedAt
+    }
+
+    FareRule "1" -- "*" Fare
+```
+
+---
+
+## 6.5. Bảng API
+
+| API nghiệp vụ  | Entity   | Chức năng   |
+| -------------- | -------- | ----------- |
+| Get Fare Rule  | FareRule | Lấy quy tắc |
+| Calculate Fare | Fare     | Tính cước   |
+| Get Fare       | Fare     | Xem cước    |
+
+---
+
+## 6.6. Data Model
+
+### FARE_RULE
+
+| Field          | Type    | Key |
+| -------------- | ------- | --- |
+| fare_rule_id   | UUID    | PK  |
+| vehicle_type   | VARCHAR |     |
+| base_price     | DECIMAL |     |
+| price_per_km   | DECIMAL |     |
+| status         | VARCHAR |     |
+| effective_from | DATE    |     |
+| effective_to   | DATE    |     |
+
+### FARE
+
+| Field         | Type      | Key          |
+| ------------- | --------- | ------------ |
+| fare_id       | UUID      | PK           |
+| fare_rule_id  | UUID      | FK           |
+| trip_id       | UUID      | Reference ID |
+| distance      | DECIMAL   |              |
+| base_fare     | DECIMAL   |              |
+| distance_fare | DECIMAL   |              |
+| total_amount  | DECIMAL   |              |
+| calculated_at | TIMESTAMP |              |
+
+---
+
+## 6.7. Chọn Database Type
+
+**PostgreSQL**
+
+Lý do:
+
+* Giá tiền cần độ chính xác cao.
+* Fare Rule cần quản lý hiệu lực theo thời gian.
+* Cần tính nhất quán dữ liệu.
+
+---
+
+## 6.8. Database
+
+```text
+Microservice:
+pricing-service
+
+Database:
+pricing_db
+
+Database Type:
+PostgreSQL
+
+Tables:
+- fare_rule
+- fare
+```
+
+### ERD
 
 ```mermaid
 erDiagram
 
-    FARE_RULE ||--o{ FARE : applies_to
+    FARE_RULE ||--o{ FARE : applies
 
     FARE_RULE {
         uuid fare_rule_id PK
-        string vehicle_type
+        varchar vehicle_type
         decimal base_price
         decimal price_per_km
-        string status
+        varchar status
         date effective_from
         date effective_to
     }
@@ -925,26 +1015,156 @@ erDiagram
         uuid fare_id PK
         uuid fare_rule_id FK
         uuid trip_id
-        string vehicle_type
         decimal distance
         decimal base_fare
         decimal distance_fare
         decimal total_amount
-        datetime calculated_at
+        timestamp calculated_at
     }
 ```
 
-Quan hệ:
+---
 
-```text
-FARE_RULE 1 ─── N FARE
-```
+# 7. BC06 – PAYMENT
 
-`trip_id` là Reference ID đến Trip Service.
+## 7.1. FR liên quan
+
+| FR   | Chức năng         |
+| ---- | ----------------- |
+| FR08 | Thanh toán        |
+| FR14 | Lịch sử giao dịch |
 
 ---
 
-## X.8.6. Payment Database
+## 7.2. Business Workflow
+
+```mermaid
+flowchart TD
+    A[Nhận tổng tiền] --> B[Chọn phương thức thanh toán]
+    B --> C{Phương thức}
+    C -->|Tiền mặt| D[Xác nhận tiền mặt]
+    C -->|Điện tử| E[Gửi Payment Provider]
+    E --> F{Thanh toán thành công?}
+    F -->|Không| G[Ghi nhận thất bại]
+    F -->|Có| H[Ghi nhận thành công]
+    D --> H
+    H --> I[Lưu giao dịch]
+```
+
+---
+
+## 7.3. Ubiquitous Language
+
+| Thuật ngữ       | Định nghĩa               |
+| --------------- | ------------------------ |
+| Payment         | Một lần thanh toán       |
+| Payment Method  | Phương thức thanh toán   |
+| Transaction     | Giao dịch                |
+| Payment Status  | Trạng thái thanh toán    |
+| Payment Attempt | Một lần thử thanh toán   |
+| Payment Retry   | Thực hiện thanh toán lại |
+
+---
+
+## 7.4. Mô hình thực thể
+
+```mermaid
+classDiagram
+
+    class Payment {
+        +UUID paymentId
+        +UUID tripId
+        +Decimal amount
+        +String paymentMethod
+        +String paymentStatus
+        +String transactionCode
+        +DateTime paymentTime
+    }
+
+    class PaymentAttempt {
+        +UUID attemptId
+        +UUID paymentId
+        +DateTime attemptTime
+        +String status
+        +String responseCode
+        +String failureReason
+    }
+
+    Payment "1" -- "*" PaymentAttempt
+```
+
+---
+
+## 7.5. Bảng API
+
+| API nghiệp vụ       | Entity         | Chức năng        |
+| ------------------- | -------------- | ---------------- |
+| Create Payment      | Payment        | Tạo thanh toán   |
+| Process Payment     | Payment        | Xử lý thanh toán |
+| Retry Payment       | PaymentAttempt | Thanh toán lại   |
+| Get Payment         | Payment        | Xem giao dịch    |
+| Get Payment History | Payment        | Xem lịch sử      |
+
+---
+
+## 7.6. Data Model
+
+### PAYMENT
+
+| Field            | Type      | Key          |
+| ---------------- | --------- | ------------ |
+| payment_id       | UUID      | PK           |
+| trip_id          | UUID      | Reference ID |
+| amount           | DECIMAL   |              |
+| payment_method   | VARCHAR   |              |
+| payment_status   | VARCHAR   |              |
+| transaction_code | VARCHAR   |              |
+| payment_time     | TIMESTAMP |              |
+
+### PAYMENT_ATTEMPT
+
+| Field          | Type      | Key |
+| -------------- | --------- | --- |
+| attempt_id     | UUID      | PK  |
+| payment_id     | UUID      | FK  |
+| attempt_time   | TIMESTAMP |     |
+| status         | VARCHAR   |     |
+| response_code  | VARCHAR   |     |
+| failure_reason | TEXT      |     |
+
+---
+
+## 7.7. Chọn Database Type
+
+**PostgreSQL**
+
+Lý do:
+
+* Payment là dữ liệu giao dịch.
+* Yêu cầu tính nhất quán cao.
+* Cần Transaction.
+* Cần lưu lịch sử các lần thanh toán.
+
+---
+
+## 7.8. Database
+
+```text
+Microservice:
+payment-service
+
+Database:
+payment_db
+
+Database Type:
+PostgreSQL
+
+Tables:
+- payment
+- payment_attempt
+```
+
+### ERD
 
 ```mermaid
 erDiagram
@@ -955,57 +1175,277 @@ erDiagram
         uuid payment_id PK
         uuid trip_id
         decimal amount
-        string payment_method
-        string payment_status
-        datetime payment_time
-        string transaction_code
+        varchar payment_method
+        varchar payment_status
+        varchar transaction_code
+        timestamp payment_time
     }
 
     PAYMENT_ATTEMPT {
         uuid attempt_id PK
         uuid payment_id FK
-        datetime attempt_time
-        string status
-        string response_code
-        string failure_reason
+        timestamp attempt_time
+        varchar status
+        varchar response_code
+        text failure_reason
     }
 ```
 
-Quan hệ:
+---
 
-```text
-PAYMENT 1 ─── N PAYMENT_ATTEMPT
-```
+# 8. BC07 – NOTIFICATION
 
-`trip_id` là Reference ID đến Trip Service.
+## 8.1. FR liên quan
+
+| FR   | Chức năng |
+| ---- | --------- |
+| FR09 | Thông báo |
 
 ---
 
-## X.8.7. Notification Database
+## 8.2. Business Workflow
 
 ```mermaid
-erDiagram
-
-    NOTIFICATION {
-        uuid notification_id PK
-        uuid user_id
-        string title
-        string content
-        string notification_type
-        string channel
-        string delivery_status
-        string read_status
-        datetime sent_at
-        datetime read_at
-        datetime created_at
-    }
+flowchart TD
+    A[Business Event] --> B[Tạo Notification]
+    B --> C[Xác định người nhận]
+    C --> D[Xác định Channel]
+    D --> E[Gửi Notification]
+    E --> F[Cập nhật Delivery Status]
+    F --> G[Người dùng đọc]
+    G --> H[Cập nhật Read Status]
 ```
-
-`user_id` là Reference ID đến Identity Service.
 
 ---
 
-## X.8.8. Rating Database
+## 8.3. Ubiquitous Language
+
+| Thuật ngữ         | Định nghĩa     |
+| ----------------- | -------------- |
+| Notification      | Thông báo      |
+| Recipient         | Người nhận     |
+| Channel           | Kênh gửi       |
+| Delivery Status   | Trạng thái gửi |
+| Read Status       | Trạng thái đọc |
+| Notification Type | Loại thông báo |
+
+---
+
+## 8.4. Mô hình thực thể
+
+```mermaid
+classDiagram
+
+    class Notification {
+        +UUID notificationId
+        +UUID userId
+        +String title
+        +String content
+        +String notificationType
+        +String channel
+        +String deliveryStatus
+        +String readStatus
+        +DateTime sentAt
+        +DateTime readAt
+        +DateTime createdAt
+    }
+```
+
+---
+
+## 8.5. Bảng API
+
+| API nghiệp vụ          | Entity       | Chức năng               |
+| ---------------------- | ------------ | ----------------------- |
+| Send Notification      | Notification | Gửi thông báo           |
+| Get Notifications      | Notification | Xem thông báo           |
+| Mark As Read           | Notification | Đánh dấu đã đọc         |
+| Update Delivery Status | Notification | Cập nhật trạng thái gửi |
+
+---
+
+## 8.6. Data Model
+
+### NOTIFICATION
+
+| Field             | Type     |
+| ----------------- | -------- |
+| notification_id   | UUID     |
+| user_id           | UUID     |
+| title             | String   |
+| content           | String   |
+| notification_type | String   |
+| channel           | String   |
+| delivery_status   | String   |
+| read_status       | String   |
+| sent_at           | DateTime |
+| read_at           | DateTime |
+| created_at        | DateTime |
+
+---
+
+## 8.7. Chọn Database Type
+
+**MongoDB**
+
+Lý do:
+
+* Notification có nội dung linh hoạt.
+* Có thể có nhiều loại notification.
+* Metadata của từng kênh có thể khác nhau.
+* Phù hợp với dữ liệu document.
+
+---
+
+## 8.8. Database
+
+```text
+Microservice:
+notification-service
+
+Database:
+notification_db
+
+Database Type:
+MongoDB
+
+Collection:
+- notifications
+```
+
+### ERD / Document Model
+
+```mermaid
+flowchart LR
+    N[Notification Document] --> ID[notification_id]
+    N --> U[user_id]
+    N --> T[title]
+    N --> C[content]
+    N --> TYPE[notification_type]
+    N --> CHANNEL[channel]
+    N --> DS[delivery_status]
+    N --> RS[read_status]
+```
+
+---
+
+# 9. BC08 – RATING & FEEDBACK
+
+## 9.1. FR liên quan
+
+| FR   | Chức năng       |
+| ---- | --------------- |
+| FR10 | Đánh giá tài xế |
+
+---
+
+## 9.2. Business Workflow
+
+```mermaid
+flowchart TD
+    A[Trip Completed] --> B[Khách hàng mở đánh giá]
+    B --> C[Chọn điểm]
+    C --> D[Nhập nhận xét]
+    D --> E[Gửi đánh giá]
+    E --> F[Kiểm tra Trip]
+    F --> G[Lưu Rating]
+```
+
+---
+
+## 9.3. Ubiquitous Language
+
+| Thuật ngữ    | Định nghĩa           |
+| ------------ | -------------------- |
+| Rating       | Đánh giá             |
+| Rating Score | Điểm đánh giá        |
+| Feedback     | Phản hồi             |
+| Comment      | Nhận xét             |
+| Rated Driver | Tài xế được đánh giá |
+
+---
+
+## 9.4. Mô hình thực thể
+
+```mermaid
+classDiagram
+
+    class Rating {
+        +UUID ratingId
+        +UUID tripId
+        +UUID customerId
+        +UUID driverId
+        +Integer ratingScore
+        +String comment
+        +DateTime createdAt
+    }
+```
+
+---
+
+## 9.5. Bảng API
+
+| API nghiệp vụ      | Entity | Chức năng               |
+| ------------------ | ------ | ----------------------- |
+| Create Rating      | Rating | Tạo đánh giá            |
+| Get Rating         | Rating | Xem đánh giá            |
+| Get Driver Ratings | Rating | Xem đánh giá của tài xế |
+
+---
+
+## 9.6. Data Model
+
+### RATING
+
+| Field        | Type      | Key          |
+| ------------ | --------- | ------------ |
+| rating_id    | UUID      | PK           |
+| trip_id      | UUID      | Reference ID |
+| customer_id  | UUID      | Reference ID |
+| driver_id    | UUID      | Reference ID |
+| rating_score | INTEGER   |              |
+| comment      | TEXT      |              |
+| created_at   | TIMESTAMP |              |
+
+Constraint:
+
+```text
+UNIQUE(trip_id)
+```
+
+Mỗi chuyến chỉ có một đánh giá của khách hàng.
+
+---
+
+## 9.7. Chọn Database Type
+
+**PostgreSQL**
+
+Lý do:
+
+* Rating có cấu trúc rõ ràng.
+* Cần ràng buộc dữ liệu.
+* Có thể truy vấn thống kê đánh giá.
+
+---
+
+## 9.8. Database
+
+```text
+Microservice:
+rating-service
+
+Database:
+rating_db
+
+Database Type:
+PostgreSQL
+
+Table:
+- rating
+```
+
+### ERD
 
 ```mermaid
 erDiagram
@@ -1016,24 +1456,233 @@ erDiagram
         uuid customer_id
         uuid driver_id
         int rating_score
-        string comment
-        datetime created_at
+        text comment
+        timestamp created_at
     }
 ```
 
-Các ID:
+---
 
-```text
-trip_id
-customer_id
-driver_id
-```
+# 10. BC09 – OPERATIONS & REPORTING
 
-là Reference ID đến các Context tương ứng.
+## 10.1. FR liên quan
+
+| FR   | Chức năng        |
+| ---- | ---------------- |
+| FR11 | Quản lý vận hành |
+| FR12 | Báo cáo          |
 
 ---
 
-## X.8.9. Operations Database
+## 10.2. Business Workflow
+
+```mermaid
+flowchart TD
+    A[Dữ liệu từ các Microservice] --> B[Thu thập Operational Data]
+    B --> C[Quản lý khách hàng]
+    B --> D[Quản lý tài xế]
+    B --> E[Quản lý phương tiện]
+    B --> F[Theo dõi chuyến]
+    C --> G[Tạo báo cáo]
+    D --> G
+    E --> G
+    F --> G
+    G --> H[Thống kê]
+    H --> I[Hiển thị báo cáo]
+```
+
+---
+
+## 10.3. Ubiquitous Language
+
+| Thuật ngữ          | Định nghĩa                           |
+| ------------------ | ------------------------------------ |
+| Operation          | Hoạt động vận hành                   |
+| Customer View      | Dữ liệu khách hàng phục vụ vận hành  |
+| Driver View        | Dữ liệu tài xế phục vụ vận hành      |
+| Vehicle View       | Dữ liệu phương tiện phục vụ vận hành |
+| Operational Trip   | Dữ liệu chuyến phục vụ giám sát      |
+| Report             | Báo cáo                              |
+| Statistic          | Chỉ số thống kê                      |
+| Driver Performance | Hiệu quả tài xế                      |
+| Cancellation Rate  | Tỷ lệ hủy                            |
+
+---
+
+## 10.4. Mô hình thực thể
+
+```mermaid
+classDiagram
+
+    class CustomerView {
+        +UUID customerId
+        +UUID accountId
+        +String customerName
+        +String phone
+        +String status
+    }
+
+    class DriverView {
+        +UUID driverId
+        +String driverName
+        +String status
+        +Boolean availability
+    }
+
+    class VehicleView {
+        +UUID vehicleId
+        +UUID driverId
+        +String vehicleType
+        +String licensePlate
+        +String status
+    }
+
+    class OperationalTripView {
+        +UUID tripId
+        +UUID customerId
+        +UUID driverId
+        +UUID vehicleId
+        +String status
+        +DateTime startTime
+        +DateTime endTime
+    }
+
+    class Report {
+        +UUID reportId
+        +String reportType
+        +Date fromDate
+        +Date toDate
+        +DateTime generatedAt
+        +UUID generatedBy
+    }
+
+    class ReportStatistic {
+        +UUID statisticId
+        +UUID reportId
+        +String metricName
+        +Decimal metricValue
+    }
+
+    Report "1" -- "*" ReportStatistic
+    DriverView "1" -- "*" VehicleView
+```
+
+---
+
+## 10.5. Bảng API
+
+| API nghiệp vụ            | Entity              | Chức năng           |
+| ------------------------ | ------------------- | ------------------- |
+| Get Customer Information | CustomerView        | Quản lý khách hàng  |
+| Get Driver Information   | DriverView          | Quản lý tài xế      |
+| Get Vehicle Information  | VehicleView         | Quản lý phương tiện |
+| Get Operational Trip     | OperationalTripView | Theo dõi chuyến     |
+| Generate Report          | Report              | Tạo báo cáo         |
+| Get Report               | Report              | Xem báo cáo         |
+| Get Statistics           | ReportStatistic     | Xem thống kê        |
+
+---
+
+## 10.6. Data Model
+
+### CUSTOMER_VIEW
+
+| Field         | Type    | Key          |
+| ------------- | ------- | ------------ |
+| customer_id   | UUID    | PK           |
+| account_id    | UUID    | Reference ID |
+| customer_name | VARCHAR |              |
+| phone         | VARCHAR |              |
+| status        | VARCHAR |              |
+
+### DRIVER_VIEW
+
+| Field        | Type    | Key |
+| ------------ | ------- | --- |
+| driver_id    | UUID    | PK  |
+| driver_name  | VARCHAR |     |
+| status       | VARCHAR |     |
+| availability | BOOLEAN |     |
+
+### VEHICLE_VIEW
+
+| Field         | Type    | Key          |
+| ------------- | ------- | ------------ |
+| vehicle_id    | UUID    | PK           |
+| driver_id     | UUID    | Reference ID |
+| vehicle_type  | VARCHAR |              |
+| license_plate | VARCHAR |              |
+| status        | VARCHAR |              |
+
+### OPERATIONAL_TRIP_VIEW
+
+| Field       | Type      | Key          |
+| ----------- | --------- | ------------ |
+| trip_id     | UUID      | PK           |
+| customer_id | UUID      | Reference ID |
+| driver_id   | UUID      | Reference ID |
+| vehicle_id  | UUID      | Reference ID |
+| status      | VARCHAR   |              |
+| start_time  | TIMESTAMP |              |
+| end_time    | TIMESTAMP |              |
+
+### REPORT
+
+| Field        | Type      | Key          |
+| ------------ | --------- | ------------ |
+| report_id    | UUID      | PK           |
+| report_type  | VARCHAR   |              |
+| from_date    | DATE      |              |
+| to_date      | DATE      |              |
+| generated_at | TIMESTAMP |              |
+| generated_by | UUID      | Reference ID |
+
+### REPORT_STATISTIC
+
+| Field        | Type    | Key |
+| ------------ | ------- | --- |
+| statistic_id | UUID    | PK  |
+| report_id    | UUID    | FK  |
+| metric_name  | VARCHAR |     |
+| metric_value | DECIMAL |     |
+
+---
+
+## 10.7. Chọn Database Type
+
+**PostgreSQL**
+
+Lý do:
+
+* Dữ liệu vận hành có cấu trúc.
+* Báo cáo cần truy vấn tổng hợp.
+* Có nhiều quan hệ giữa Report và Statistic.
+* Hỗ trợ tốt các truy vấn thống kê.
+
+---
+
+## 10.8. Database
+
+```text
+Microservice:
+operations-service
+
+Database:
+operations_db
+
+Database Type:
+PostgreSQL
+
+Tables:
+- customer_view
+- driver_view
+- vehicle_view
+- operational_trip_view
+- report
+- report_statistic
+```
+
+### ERD
 
 ```mermaid
 erDiagram
@@ -1042,143 +1691,121 @@ erDiagram
 
     REPORT {
         uuid report_id PK
-        string report_type
+        varchar report_type
         date from_date
         date to_date
-        datetime generated_at
+        timestamp generated_at
         uuid generated_by
     }
 
     REPORT_STATISTIC {
         uuid statistic_id PK
         uuid report_id FK
-        string metric_name
+        varchar metric_name
         decimal metric_value
+    }
+
+    CUSTOMER_VIEW {
+        uuid customer_id PK
+        uuid account_id
+        varchar customer_name
+        varchar phone
+        varchar status
+    }
+
+    DRIVER_VIEW {
+        uuid driver_id PK
+        varchar driver_name
+        varchar status
+        boolean availability
+    }
+
+    VEHICLE_VIEW {
+        uuid vehicle_id PK
+        uuid driver_id
+        varchar vehicle_type
+        varchar license_plate
+        varchar status
+    }
+
+    OPERATIONAL_TRIP_VIEW {
+        uuid trip_id PK
+        uuid customer_id
+        uuid driver_id
+        uuid vehicle_id
+        varchar status
+        timestamp start_time
+        timestamp end_time
     }
 ```
 
-Các `CustomerView`, `DriverView`, `VehicleView` và `OperationalTripView` là dữ liệu projection phục vụ vận hành, có thể được lưu dưới dạng bảng/read model trong Operations Database.
+---
+
+# 11. TỔNG HỢP 9 BOUNDED CONTEXT
+
+| BC                          | FR               | Microservice            | Database           | DB Type    |
+| --------------------------- | ---------------- | ----------------------- | ------------------ | ---------- |
+| BC01 Identity & Access      | FR01, FR13       | identity-service        | identity_db        | PostgreSQL |
+| BC02 Booking                | FR02             | booking-service         | booking_db         | PostgreSQL |
+| BC03 Driver & Dispatch      | FR03, FR04       | driver-dispatch-service | driver_dispatch_db | PostgreSQL |
+| BC04 Trip Management        | FR05, FR06, FR14 | trip-service            | trip_db            | PostgreSQL |
+| BC05 Pricing & Fare         | FR07             | pricing-service         | pricing_db         | PostgreSQL |
+| BC06 Payment                | FR08, FR14       | payment-service         | payment_db         | PostgreSQL |
+| BC07 Notification           | FR09             | notification-service    | notification_db    | MongoDB    |
+| BC08 Rating & Feedback      | FR10             | rating-service          | rating_db          | PostgreSQL |
+| BC09 Operations & Reporting | FR11, FR12       | operations-service      | operations_db      | PostgreSQL |
 
 ---
 
-# X.9. SƠ ĐỒ TỔNG THỂ KIẾN TRÚC MICROSERVICE
+# 12. TỔNG QUAN KIẾN TRÚC
 
 ```mermaid
 flowchart TB
 
-    CLIENT([Customer / Driver / Operator])
+    USER[Customer / Driver / Operator]
 
-    CLIENT --> API[API Gateway]
+    USER --> GATEWAY[API Gateway]
 
-    API --> ID[Identity Service]
-    API --> BOOK[Booking Service]
-    API --> DIS[Driver & Dispatch Service]
-    API --> TRIP[Trip Service]
-    API --> PRICE[Pricing Service]
-    API --> PAY[Payment Service]
-    API --> NOTI[Notification Service]
-    API --> RATE[Rating Service]
-    API --> OPS[Operations & Reporting Service]
+    GATEWAY --> BC1[Identity Service]
+    GATEWAY --> BC2[Booking Service]
+    GATEWAY --> BC3[Driver & Dispatch Service]
+    GATEWAY --> BC4[Trip Service]
+    GATEWAY --> BC5[Pricing Service]
+    GATEWAY --> BC6[Payment Service]
+    GATEWAY --> BC7[Notification Service]
+    GATEWAY --> BC8[Rating Service]
+    GATEWAY --> BC9[Operations Service]
 
-    ID --> IDDB[(identity_db)]
-    BOOK --> BOOKDB[(booking_db)]
-    DIS --> DISDB[(driver_dispatch_db)]
-    TRIP --> TRIPDB[(trip_db)]
-    PRICE --> PRICEDB[(pricing_db)]
-    PAY --> PAYDB[(payment_db)]
-    NOTI --> NOTIDB[(notification_db)]
-    RATE --> RATEDB[(rating_db)]
-    OPS --> OPSDB[(operations_db)]
+    BC1 --> DB1[(identity_db)]
+    BC2 --> DB2[(booking_db)]
+    BC3 --> DB3[(driver_dispatch_db)]
+    BC4 --> DB4[(trip_db)]
+    BC5 --> DB5[(pricing_db)]
+    BC6 --> DB6[(payment_db)]
+    BC7 --> DB7[(notification_db)]
+    BC8 --> DB8[(rating_db)]
+    BC9 --> DB9[(operations_db)]
 
-    BOOK -. "Booking Created" .-> DIS
-    DIS -. "Driver Assigned" .-> TRIP
-    TRIP -. "Trip Completed" .-> PRICE
-    PRICE -. "Fare Calculated" .-> PAY
-
-    BOOK -. "Booking Notification" .-> NOTI
-    DIS -. "Driver Notification" .-> NOTI
-    TRIP -. "Trip Notification" .-> NOTI
-    PAY -. "Payment Result" .-> NOTI
-
-    TRIP -. "Trip Completed" .-> RATE
-
-    BOOK -. "Operational Event" .-> OPS
-    DIS -. "Operational Event" .-> OPS
-    TRIP -. "Operational Event" .-> OPS
-    PAY -. "Operational Event" .-> OPS
-    RATE -. "Rating Event" .-> OPS
+    BC2 -. Booking Created .-> BC3
+    BC3 -. Driver Assigned .-> BC4
+    BC4 -. Trip Completed .-> BC5
+    BC5 -. Fare Calculated .-> BC6
+    BC2 -. Notification Event .-> BC7
+    BC3 -. Notification Event .-> BC7
+    BC4 -. Notification Event .-> BC7
+    BC6 -. Payment Event .-> BC7
+    BC4 -. Trip Completed .-> BC8
+    BC2 -. Operational Event .-> BC9
+    BC3 -. Operational Event .-> BC9
+    BC4 -. Operational Event .-> BC9
+    BC6 -. Operational Event .-> BC9
 ```
 
 ---
 
-# X.10. BUSINESS DATA FLOW GIỮA CÁC MICROSERVICE
+# 13. QUY TẮC DATA OWNERSHIP
 
-```mermaid
-sequenceDiagram
-
-    participant C as Customer
-    participant B as Booking Service
-    participant D as Driver & Dispatch
-    participant T as Trip Service
-    participant P as Pricing Service
-    participant PY as Payment Service
-    participant N as Notification Service
-    participant R as Rating Service
-
-    C->>B: Create Booking
-    B-->>N: Booking Created
-    B->>D: Search Driver
-
-    D->>D: Check Driver Status
-    D->>D: Check Driver Location
-    D->>D: Select Suitable Driver
-
-    D-->>N: Driver Request
-    D->>D: Driver Accepts
-    D->>T: Driver Assigned
-
-    T-->>N: Driver Assigned
-    T->>T: Track Trip
-    T->>T: Update Trip Status
-
-    T->>P: Trip Completed
-    P->>P: Calculate Fare
-    P->>PY: Fare Amount
-
-    PY->>PY: Process Payment
-    PY-->>N: Payment Result
-
-    T->>R: Trip Completed
-    C->>R: Submit Rating
-```
-
----
-
-# X.11. QUY TẮC QUAN HỆ GIỮA CÁC MICROSERVICE
-
-## 1. Không dùng Foreign Key xuyên Database
-
-Không thiết kế:
-
-```text
-booking_db
-    ↓
-FK → identity_db
-```
-
-Thay vào đó:
-
-```text
-booking_db
-    │
-    └── customer_id
-             │
-             └── Reference ID
-```
-
----
-
-## 2. Microservice chỉ sở hữu dữ liệu của mình
+Mỗi Bounded Context chỉ sở hữu dữ liệu của mình.
 
 ```text
 Identity Service
@@ -1195,7 +1822,7 @@ Driver / Vehicle / Dispatch
 
 Trip Service
     ↓
-Trip / Location / Status History
+Trip / Location / Trip History
 
 Pricing Service
     ↓
@@ -1203,7 +1830,7 @@ Fare / Fare Rule
 
 Payment Service
     ↓
-Payment / Payment Attempt
+Payment / Transaction
 
 Notification Service
     ↓
@@ -1215,162 +1842,65 @@ Rating
 
 Operations Service
     ↓
-Operational Read Model / Report
+Operational Data / Report
+```
+
+Không cho phép:
+
+```text
+Service A → truy cập trực tiếp → Database B
+```
+
+Mà phải:
+
+```text
+Service A
+   ↓
+API / Event
+   ↓
+Service B
+   ↓
+Database B
 ```
 
 ---
 
-## 3. Giao tiếp giữa các Context
+# 14. KẾT LUẬN
 
-Có thể sử dụng:
+Thiết kế CabSystem được thực hiện theo DDD với 9 Bounded Context.
 
-```text
-REST API
-```
-
-cho các request cần phản hồi trực tiếp.
-
-Hoặc:
+Đối với **từng Bounded Context**, quá trình thiết kế được thực hiện thống nhất:
 
 ```text
-Event / Message
-```
-
-cho các sự kiện nghiệp vụ như:
-
-```text
-BookingCreated
-DriverAssigned
-TripStarted
-TripCompleted
-FareCalculated
-PaymentCompleted
-PaymentFailed
-RatingCreated
-```
-
----
-
-# X.12. ÁNH XẠ FR → BOUNDED CONTEXT
-
-| FR   | Bounded Context chịu trách nhiệm |
-| ---- | -------------------------------- |
-| FR01 | Identity & Access                |
-| FR02 | Booking                          |
-| FR03 | Driver & Dispatch                |
-| FR04 | Driver & Dispatch                |
-| FR05 | Trip Management                  |
-| FR06 | Trip Management                  |
-| FR07 | Pricing & Fare                   |
-| FR08 | Payment                          |
-| FR09 | Notification                     |
-| FR10 | Rating & Feedback                |
-| FR11 | Operations & Reporting           |
-| FR12 | Operations & Reporting           |
-| FR13 | Identity & Access                |
-| FR14 | Trip Management + Payment        |
-
----
-
-# X.13. TỔNG KẾT THIẾT KẾ
-
-CabSystem được phân tách thành 9 Bounded Context:
-
-1. **Identity & Access**
-2. **Booking**
-3. **Driver & Dispatch**
-4. **Trip Management**
-5. **Pricing & Fare**
-6. **Payment**
-7. **Notification**
-8. **Rating & Feedback**
-9. **Operations & Reporting**
-
-Mỗi Bounded Context tương ứng với một Microservice và một Database riêng.
-
-Kiến trúc tuân theo nguyên tắc:
-
-```text
-Bounded Context
+FR liên quan
       ↓
-Microservice
-      ↓
-Own Database
-      ↓
-Own Domain Model
-```
-
-Các Microservice không truy cập trực tiếp Database của nhau. Những dữ liệu cần tham chiếu giữa các Context sử dụng Reference ID và giao tiếp thông qua API hoặc Event.
-
-Chuỗi thiết kế hoàn chỉnh:
-
-```text
-Functional Requirement
-        ↓
 Business Workflow
-        ↓
-Bounded Context
-        ↓
+      ↓
 Ubiquitous Language
-        ↓
-Microservice
-        ↓
+      ↓
+Mô hình thực thể
+      ↓
 API
-        ↓
-Entity Model
-        ↓
-Database
-        ↓
+      ↓
 Data Model
-        ↓
+      ↓
+Chọn Database Type
+      ↓
+Database
+      ↓
 ERD
 ```
 
-Thiết kế này giúp CabSystem có khả năng phân tách rõ trách nhiệm nghiệp vụ, giảm phụ thuộc giữa các module và hỗ trợ triển khai, mở rộng từng Microservice độc lập.
+Do đó, mỗi Bounded Context vừa thể hiện được **phạm vi nghiệp vụ**, **ngôn ngữ riêng**, **thực thể**, **API**, **mô hình dữ liệu**, vừa xác định được **Database phù hợp**.
 
----
-
-# X.14. CẤU TRÚC ĐỀ XUẤT TRÊN GITHUB
+Mô hình cuối cùng:
 
 ```text
-CabSystem/
-│
-├── API Document/
-│
-├── Testcase/
-│
-├── srs.md
-│
-├── Microservice_Design.md
-│
-└── DDD/
-    │
-    ├── Bounded_Context.md
-    ├── Ubiquitous_Language.md
-    ├── Microservice_Architecture.md
-    │
-    ├── Entity_Model/
-    │   ├── Identity.md
-    │   ├── Booking.md
-    │   ├── Driver_Dispatch.md
-    │   ├── Trip.md
-    │   ├── Pricing.md
-    │   ├── Payment.md
-    │   ├── Notification.md
-    │   ├── Rating.md
-    │   └── Operations.md
-    │
-    └── ERD/
-        ├── Identity.md
-        ├── Booking.md
-        ├── Driver_Dispatch.md
-        ├── Trip.md
-        ├── Pricing.md
-        ├── Payment.md
-        ├── Notification.md
-        ├── Rating.md
-        └── Operations.md
+9 Bounded Context
+        ↓
+9 Microservice
+        ↓
+9 Database
 ```
 
-> **Lưu ý khi đưa lên GitHub:** Các đoạn bắt đầu bằng ` ```mermaid ` và kết thúc bằng ` ``` ` là Mermaid Diagram. GitHub sẽ tự render chúng thành sơ đồ khi mở file `.md`.
-
+Mỗi Microservice độc lập về dữ liệu và giao tiếp với các Microservice khác thông qua API hoặc Event/Message.
